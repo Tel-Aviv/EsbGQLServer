@@ -13,6 +13,7 @@ type Category {
 
 type Service {
     id: ID!
+    categoryId: Int
     name: String
     address: String!
     description: String
@@ -25,7 +26,7 @@ type Service {
 # This type specifies the entry points into our API.
 type Query {
     categories: [Category]
-    services: [Service]
+    services(categoryId: Int): [Service]
     service(name: String): Service
 }
 `;

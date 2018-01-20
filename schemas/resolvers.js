@@ -29,12 +29,16 @@ const categories = [{
 
 const services = [{
     id: 1,
-    name: 'soccer',
-    address: 'ws://'
+    categoryId: 1,
+    name: 'Service Name A',
+    address: 'http://iis07/apps/s1.svc',
+    sla: 200
   }, {
     id: 2,
-    name: 'baseball',
-    address: 'gql://'
+    categoryId: 2,
+    name: 'Service Name B',
+    address: 'http://iis08/apps/s2.svc',
+    sla: 150
 }];
 
 export const resolvers = {
@@ -55,7 +59,15 @@ export const resolvers = {
       //
       // So because we din't touched 'context' object on Express, we get it here as the request
       // parameter - named context
-      return services;
+
+      if( !args.categoryId )
+        return services;
+
+      const categoryId = args.categoryId;
+
+      return services.filter( (service) => {
+        return service.categoryId == categoryId;
+      })
     },
     service: (root, {name}) => {
         const serice = services.find(service => service.name == name);
