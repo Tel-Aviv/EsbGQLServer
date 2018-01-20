@@ -1,0 +1,26 @@
+{
+  "name": "esbgqlserver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js --exec babel-node --presets es2015",
+    "debug": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk",
+    "flow": "flow",
+    "test": "jest"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "babel-core": "^6.26.0",
+    "babel-polyfill": "^6.26.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-react": "^6.24.1",
+    "cors": "^2.8.4",
+    "express": "^4.16.2",
+    "express-graphql": "^0.6.11",
+    "graphql": "^0.12.3",
+    "graphql-server": "^0.3.2",
+    "graphql-tools": "^2.18.0"
+  }
+}
