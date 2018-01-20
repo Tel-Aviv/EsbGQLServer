@@ -1,6 +1,32 @@
 import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
 
+const categories = [{
+  id: 1,
+  name: "משרד התחבורה"
+}, {
+  id: 2,
+  name: "שירותי מיקום"
+}, {
+  id: 3,
+  name: "דיגיתל"
+}, {
+  id: 4,
+  name: "מחו\"ג"
+}, {
+  id: 5,
+  name: "עירייה זמינה"
+}, {
+  id: 6,
+  name: "עמ\"ל"
+}, {
+  id: 10,
+  name: "טלאול"
+}, {
+  id: 12,
+  name: "תשתיות אינטגרציה"
+}];
+
 const services = [{
     id: 1,
     name: 'soccer',
@@ -14,6 +40,11 @@ const services = [{
 export const resolvers = {
 
   Query: {
+
+    categories: (root, args, context) => {
+      return categories;
+    },
+
     services: (root, args, context) => {
 
       // 'context' is optional parameter passed to graphqlHTTP middleware.
