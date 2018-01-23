@@ -40,10 +40,12 @@ class EsbAPI {
   static getServicesByCategoryId(categoryId: number) {
     return new Promise( (resolve, reject) => {
         setTimeout( () => {
-            resolve(_.assign([], [
-              { value: 'three', label: 'Three' },
-              { value: 'four', label: 'Four' },
-            ]))
+
+           let categorizedServices = services.filter( (service) => {
+             return service.categoryId == categoryId;
+           });
+
+            resolve(_.assign([], categorizedServices))
         }, 1000);
     });
   }
@@ -91,7 +93,7 @@ export const resolvers = {
             });
 
         });
-        
+
       } else {
 
         const url = 'http://esb01/ESBUddiApplication/api/Categories';
@@ -135,10 +137,33 @@ export const resolvers = {
 
       const categoryId = args.categoryId;
 
-      return services.filter( (service) => {
-        return service.categoryId == categoryId;
-      })
+      if( isMockMode() ) {
+        let promise = EsbAPI.getServicesByCategoryId(categoryId);
+        return promise.then( _services => {
+          return _services;
+        });
+      } else {
+
+        const url = 'http://esb01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+
+        return rp({
+          uri: url,
+          headers: {
+            'User-Agent': 'GraphQL'
+          },
+          json: true
+        }).then( res => {
+
+          return res;
+
+        }).catch( (data) => {
+          return Promise.reject(data.error.message);
+        })
+
+      }
+
     },
+    
     service: (root, {name}) => {
         const serice = services.find(service => service.name == name);
         return serice;
