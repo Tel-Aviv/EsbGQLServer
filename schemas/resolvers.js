@@ -1,31 +1,53 @@
+import _ from 'lodash';
 import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
 
 const categories = [{
-  id: 1,
-  name: "משרד התחבורה"
+  CategoryId: 1,
+  CategoryName: "משרד התחבורה"
 }, {
-  id: 2,
-  name: "שירותי מיקום"
+  CategoryId: 2,
+  CategoryName: "שירותי מיקום"
 }, {
-  id: 3,
-  name: "דיגיתל"
+  CategoryId: 3,
+  CategoryName: "דיגיתל"
 }, {
-  id: 4,
-  name: "מחו\"ג"
+  CategoryId: 4,
+  CategoryName: "מחו\"ג"
 }, {
-  id: 5,
-  name: "עירייה זמינה"
+  CategoryId: 5,
+  CategoryName: "עירייה זמינה"
 }, {
-  id: 6,
-  name: "עמ\"ל"
+  CategoryId: 6,
+  CategoryName: "עמ\"ל"
 }, {
-  id: 10,
-  name: "טלאול"
+  CategoryId: 10,
+  CategoryName: "טלאול"
 }, {
-  id: 12,
-  name: "תשתיות אינטגרציה"
+  CategoryId: 12,
+  CategoryName: "תשתיות אינטגרציה"
 }];
+
+class EsbAPI {
+  static getAllCategories() {
+    return new Promise( (resolve, reject) => {
+      setTimeout( () => {
+        resolve(_.assign([], categories))
+      }, 1000);
+    })
+  }
+
+  static getServicesByCategoryId(categoryId: number) {
+    return new Promise( (resolve, reject) => {
+        setTimeout( () => {
+            resolve(_.assign([], [
+              { value: 'three', label: 'Three' },
+              { value: 'four', label: 'Four' },
+            ]))
+        }, 1000);
+    });
+  }
+};
 
 const services = [{
     id: 1,
@@ -41,12 +63,60 @@ const services = [{
     sla: 150
 }];
 
+function isMockMode() {
+
+  let mockToken = process.argv.find( (arg) => {
+    return arg == "--mock"
+  })
+
+  return mockToken;
+}
+
 export const resolvers = {
 
   Query: {
 
     categories: (root, args, context) => {
-      return categories;
+
+      if( isMockMode() ) {
+
+        let promise = EsbAPI.getAllCategories();
+        return promise.then( res => {
+
+            return res.map( (category) => {
+              return {
+                id: category.CategoryId,
+                name: category.CategoryName
+              }
+            });
+
+        });
+        
+      } else {
+
+        const url = 'http://esb01/ESBUddiApplication/api/Categories';
+
+        return rp({
+          uri: url,
+          headers: {
+            'User-Agent': 'GraphQL'
+          },
+          json: true
+        }).then( res => {
+
+          return res.map( (category) => {
+            return {
+              id: category.CategoryId,
+              name: category.CategoryName
+            }
+          });
+
+        }).catch( (data) => {
+          return Promise.reject(data.error.message);
+        })
+
+        return categories;
+      }
     },
 
     services: (root, args, context) => {
