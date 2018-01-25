@@ -28,29 +28,6 @@ const categories = [{
   CategoryName: "תשתיות אינטגרציה"
 }];
 
-class EsbAPI {
-  static getAllCategories() {
-    return new Promise( (resolve, reject) => {
-      setTimeout( () => {
-        resolve(_.assign([], categories))
-      }, 1000);
-    })
-  }
-
-  static getServicesByCategoryId(categoryId: number) {
-    return new Promise( (resolve, reject) => {
-        setTimeout( () => {
-
-           let categorizedServices = services.filter( (service) => {
-             return service.categoryId == categoryId;
-           });
-
-            resolve(_.assign([], categorizedServices))
-        }, 1000);
-    });
-  }
-};
-
 const services = [{
     id: 1,
     categoryId: 1,
@@ -64,6 +41,40 @@ const services = [{
     address: 'http://iis08/apps/s2.svc',
     sla: 150
 }];
+
+class EsbAPI {
+  static getAllCategories() {
+    return new Promise( (resolve, reject) => {
+      setTimeout( () => {
+        resolve(_.assign([], categories))
+      }, 1000);
+    })
+  }
+
+  static getAllServices() {
+    return new Promise( (resolve, reject) => {
+      setTimeout( () => {
+
+        resolve(_.assign([],services));
+
+      }, 1000);
+    });
+ }
+
+  static getServicesByCategoryId(categoryId: number) {
+    return new Promise( (resolve, reject) => {
+        setTimeout( () => {
+
+           let categorizedServices = services.filter( (service) => {
+             return service.categoryId == categoryId;
+           });
+
+            resolve(_.assign([], categorizedServices));
+
+        }, 1000);
+    });
+  }
+};
 
 function isMockMode() {
 
@@ -132,19 +143,30 @@ export const resolvers = {
       // So because we din't touched 'context' object on Express, we get it here as the request
       // parameter - named context
 
-      if( !args.categoryId )
-        return services;
-
       const categoryId = args.categoryId;
 
       if( isMockMode() ) {
-        let promise = EsbAPI.getServicesByCategoryId(categoryId);
-        return promise.then( _services => {
-          return _services;
-        });
+
+        if( !args.categoryId ) {
+
+          let promise = EsbAPI.getAllServices();
+          return promise.then( _services => {
+            return _services;
+          });
+
+        } else {
+
+          let promise = EsbAPI.getServicesByCategoryId(categoryId);
+          return promise.then( _services => {
+            return _services;
+          });
+
+        }
       } else {
 
-        const url = 'http://esb01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+        const url = ( !args.categoryId ) ?
+                 'http://m2055895-w7/ESBUddiApplication/api/Services'
+                 : 'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
 
         return rp({
           uri: url,
@@ -163,7 +185,7 @@ export const resolvers = {
       }
 
     },
-    
+
     service: (root, {name}) => {
         const serice = services.find(service => service.name == name);
         return serice;
