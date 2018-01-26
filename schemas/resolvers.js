@@ -4,38 +4,46 @@ import { GraphQLError } from 'graphql/error';
 
 const categories = [{
   CategoryId: 1,
-  CategoryName: "משרד התחבורה"
+  CategoryName: "משרד התחבורה",
+  Description: "Description 1"
 }, {
   CategoryId: 2,
-  CategoryName: "שירותי מיקום"
+  CategoryName: "שירותי מיקום",
+  Description: "Description 2"
 }, {
   CategoryId: 3,
-  CategoryName: "דיגיתל"
+  CategoryName: "דיגיתל",
+  Description: "Description 3"
 }, {
   CategoryId: 4,
-  CategoryName: "מחו\"ג"
+  CategoryName: "מחו\"ג",
+  Description: "Description 4"
 }, {
   CategoryId: 5,
-  CategoryName: "עירייה זמינה"
+  CategoryName: "עירייה זמינה",
+  Description: "Description 5"
 }, {
   CategoryId: 6,
-  CategoryName: "עמ\"ל"
+  CategoryName: "עמ\"ל",
+  Description: "Description 6"
 }, {
   CategoryId: 10,
-  CategoryName: "טלאול"
+  CategoryName: "טלאול",
+  Description: "Description 10"
 }, {
   CategoryId: 12,
-  CategoryName: "תשתיות אינטגרציה"
+  CategoryName: "תשתיות אינטגרציה",
+  Description: "Description 12"
 }];
 
 const services = [{
-    id: 1,
+    id: 111,
     categoryId: 1,
     name: 'Service Name A',
     address: 'http://iis07/apps/s1.svc',
     sla: 200
   }, {
-    id: 2,
+    id: 112,
     categoryId: 2,
     name: 'Service Name B',
     address: 'http://iis08/apps/s2.svc',
@@ -99,7 +107,8 @@ export const resolvers = {
             return res.map( (category) => {
               return {
                 id: category.CategoryId,
-                name: category.CategoryName
+                name: category.CategoryName,
+                description: category.Description
               }
             });
 
@@ -120,7 +129,8 @@ export const resolvers = {
           return res.map( (category) => {
             return {
               id: category.CategoryId,
-              name: category.CategoryName
+              name: category.CategoryName,
+              description: category.Description
             }
           });
 
@@ -129,6 +139,34 @@ export const resolvers = {
         })
 
         return categories;
+      }
+    },
+
+    category: (root, {id}) => {
+
+      if( isMockMode() ) {
+        const category = categories.find(category => category.CategoryId == id);
+        return {
+          id: category.CategoryId,
+          name: category.CategoryName,
+          description: category.Description
+        }
+      } else {
+        const url = 'http://esb01/ESBUddiApplication/api/Categories/' + id;
+
+        return rp({
+          uri: url,
+          headers: {
+            'User-Agent': 'GraphQL'
+          },
+          json: true
+        }).then( category => {
+          return {
+            id: category.CategoryId,
+            name: category.CategoryName,
+            description: category.Description
+          }
+        })
       }
     },
 
@@ -187,8 +225,8 @@ export const resolvers = {
     },
 
     service: (root, {name}) => {
-        const serice = services.find(service => service.name == name);
-        return serice;
+        const service = services.find(service => service.name == name);
+        return service;
     }
   }
 
