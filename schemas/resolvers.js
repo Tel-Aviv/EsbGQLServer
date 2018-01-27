@@ -129,10 +129,13 @@ export const resolvers = {
         let promise = EsbAPI.getCategory(id);
         return promise.then ( res => {
 
+          let services = mockServices.filter( s => s.categoryId == id );
+
           return {
             id: res.CategoryId,
             name: res.CategoryName,
-            description: res.Description
+            description: res.Description,
+            services: services
           }
 
         });
