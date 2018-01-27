@@ -10,6 +10,12 @@ const mockServices = [{
     name: 'Service Name B',
     address: 'http://iis08/apps/s2.svc',
     sla: 150
+}, {
+  id: 113,
+  categoryId: 2,
+  name: 'Service Name C',
+  address: 'http://iis08/apps/s3.svc',
+  sla: 140
 }];
 
 module.exports = mockServices;
