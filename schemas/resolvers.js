@@ -4,6 +4,7 @@ import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
 import mockCategories from './MockCategories';
 
+const MOCK_TIMEOUT = 1000;
 
 class EsbAPI {
 
@@ -15,8 +16,8 @@ class EsbAPI {
 
           let category = mockCategories.find(category => category.CategoryId == categoryId);
           resolve(category);
-          
-        }, 1000);
+
+        }, MOCK_TIMEOUT);
     })
 
   }
@@ -29,7 +30,7 @@ class EsbAPI {
 
         resolve(_.assign([], mockCategories));
 
-      }, 1000);
+      }, MOCK_TIMEOUT);
     })
   }
 
@@ -41,7 +42,7 @@ class EsbAPI {
 
         resolve(_.assign([],services));
 
-      }, 1000);
+      }, MOCK_TIMEOUT);
     });
  }
 
@@ -57,7 +58,7 @@ class EsbAPI {
 
            resolve(_.assign([], categorizedServices));
 
-        }, 1000);
+        }, MOCK_TIMEOUT);
     });
   }
 };
