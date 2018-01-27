@@ -19,7 +19,10 @@ type Category implements Node {
   id: ID!
   name: String
   description: String
+<<<<<<< HEAD
   services: [Service]
+=======
+>>>>>>> 9634efd6170bb343fde80605fce0d5380d451afb
 }
 
 type Service implements Node {
