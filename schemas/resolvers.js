@@ -1,66 +1,42 @@
 import _ from 'lodash';
 import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
+import mockServices from './MockServices';
+import mockCategories from './MockCategories';
 
-const categories = [{
-  CategoryId: 1,
-  CategoryName: "משרד התחבורה",
-  Description: "Description 1"
-}, {
-  CategoryId: 2,
-  CategoryName: "שירותי מיקום",
-  Description: "Description 2"
-}, {
-  CategoryId: 3,
-  CategoryName: "דיגיתל",
-  Description: "Description 3"
-}, {
-  CategoryId: 4,
-  CategoryName: "מחו\"ג",
-  Description: "Description 4"
-}, {
-  CategoryId: 5,
-  CategoryName: "עירייה זמינה",
-  Description: "Description 5"
-}, {
-  CategoryId: 6,
-  CategoryName: "עמ\"ל",
-  Description: "Description 6"
-}, {
-  CategoryId: 10,
-  CategoryName: "טלאול",
-  Description: "Description 10"
-}, {
-  CategoryId: 12,
-  CategoryName: "תשתיות אינטגרציה",
-  Description: "Description 12"
-}];
-
-const services = [{
-    id: 111,
-    categoryId: 1,
-    name: 'Service Name A',
-    address: 'http://iis07/apps/s1.svc',
-    sla: 200
-  }, {
-    id: 112,
-    categoryId: 2,
-    name: 'Service Name B',
-    address: 'http://iis08/apps/s2.svc',
-    sla: 150
-}];
 
 class EsbAPI {
-  static getAllCategories() {
+
+  static getCategory(categoryId: number) {
+
     return new Promise( (resolve, reject) => {
+
+        setTimeout( () => {
+
+          let category = mockCategories.find(category => category.CategoryId == categoryId);
+          resolve(category);
+          
+        }, 1000);
+    })
+
+  }
+
+  static getAllCategories() {
+
+    return new Promise( (resolve, reject) => {
+
       setTimeout( () => {
-        resolve(_.assign([], categories))
+
+        resolve(_.assign([], mockCategories));
+
       }, 1000);
     })
   }
 
   static getAllServices() {
+
     return new Promise( (resolve, reject) => {
+
       setTimeout( () => {
 
         resolve(_.assign([],services));
@@ -70,14 +46,16 @@ class EsbAPI {
  }
 
   static getServicesByCategoryId(categoryId: number) {
+
     return new Promise( (resolve, reject) => {
+
         setTimeout( () => {
 
-           let categorizedServices = services.filter( (service) => {
+           let categorizedServices = mockServices.filter( (service) => {
              return service.categoryId == categoryId;
            });
 
-            resolve(_.assign([], categorizedServices));
+           resolve(_.assign([], categorizedServices));
 
         }, 1000);
     });
@@ -105,6 +83,7 @@ export const resolvers = {
         return promise.then( res => {
 
             return res.map( (category) => {
+
               return {
                 id: category.CategoryId,
                 name: category.CategoryName,
@@ -145,12 +124,17 @@ export const resolvers = {
     category: (root, {id}) => {
 
       if( isMockMode() ) {
-        const category = categories.find(category => category.CategoryId == id);
-        return {
-          id: category.CategoryId,
-          name: category.CategoryName,
-          description: category.Description
-        }
+
+        let promise = EsbAPI.getCategory(id);
+        return promise.then ( res => {
+
+          return {
+            id: res.CategoryId,
+            name: res.CategoryName,
+            description: res.Description
+          }
+
+        });
       } else {
         const url = 'http://esb01/ESBUddiApplication/api/Categories/' + id;
 
