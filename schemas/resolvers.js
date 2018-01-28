@@ -40,7 +40,7 @@ class EsbAPI {
 
       setTimeout( () => {
 
-        resolve(_.assign([],services));
+        resolve(_.assign([], mockServices));
 
       }, MOCK_TIMEOUT);
     });
