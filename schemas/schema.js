@@ -30,7 +30,7 @@ type Service implements Node {
     description: String
     sla: Int
     when_published: String #Date
-    affiliation: [String]
+    affiliations: [String]
     available: Boolean
 }
 
@@ -56,7 +56,7 @@ input ServiceInput {
   address: String!
   description: String
   sla: Int
-  affiliation: String
+  affiliations: [String]
 }
 
 type Mutation {
