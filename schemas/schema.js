@@ -19,10 +19,7 @@ type Category implements Node {
   id: ID!
   name: String
   description: String
-<<<<<<< HEAD
   services: [Service]
-=======
->>>>>>> 9634efd6170bb343fde80605fce0d5380d451afb
 }
 
 type Service implements Node {
@@ -53,8 +50,17 @@ type Query {
     service(name: String): Service
 }
 
+input ServiceInput {
+  name: String!
+  categoryId: Int!
+  address: String!
+  description: String
+  sla: Int
+  affiliation: String
+}
+
 type Mutation {
-  publishService(name: String, address: String): Service
+  publishService(input: ServiceInput): Service
 }
 
 type Subscription {
