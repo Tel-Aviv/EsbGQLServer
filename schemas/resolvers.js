@@ -50,9 +50,10 @@ class EsbAPI {
 
       }, MOCK_TIMEOUT);
     });
+
  }
 
-  static getServicesByCategoryId(categoryId: number) {
+ static getServicesByCategoryId(categoryId: number) {
 
     return new Promise( (resolve, reject) => {
 
@@ -67,6 +68,18 @@ class EsbAPI {
         }, MOCK_TIMEOUT);
     });
   }
+
+  static getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+
+  static generateServiceId() {
+    let min = Math.ceil(1);
+    let max = Math.floor(1000);
+    return getRandomInt(min, max);
+  }
+
 };
 
 function isMockMode() {
@@ -76,6 +89,18 @@ function isMockMode() {
   })
 
   return mockToken;
+}
+
+class Service {
+  constructor(id, name, address, description, sla, when_published, affiliations) {
+    this.id = id;
+    this.name = name;
+    this.address = address;
+    this.description = description;
+    this.sla = sla;
+    this.when_published = when_published;
+    this.affiliations = affiliations;
+  }
 }
 
 export const resolvers = {
@@ -253,6 +278,31 @@ export const resolvers = {
     service: (root, {name}) => {
         const service = services.find(service => service.name == name);
         return service;
+    }
+  },
+
+  Mutation: {
+    publishService: function(_, {input}, context) {
+      if( isMockMode() ) {
+        let serviceId = EsbAPI.generateServiceId();
+        return new Service(serviceId,
+                           input.name,
+                           input.address,
+                           input.description,
+                           input.sla,
+                           Date(),
+                           input.affiliations);
+      }
+      else { // TBD with after 'npm install mssql'
+          let serviceId = 888;
+          return new Service(serviceId,
+                             input.name,
+                             input.address,
+                             input.description,
+                             input.sla,
+                             Date(),
+                             input.affiliations);
+      }
     }
   }
 
