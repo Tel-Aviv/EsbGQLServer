@@ -3,6 +3,12 @@ import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
 import mockCategories from './MockCategories';
+import elasticsearch from 'elasticsearch';
+
+var client = new elasticsearch.Client({
+  host: '10.1.70.47:9200',
+  log: 'trace'
+});
 
 const MOCK_TIMEOUT = 1000;
 
@@ -96,7 +102,7 @@ export const resolvers = {
 
       } else {
 
-        const url = 'http://esb01/ESBUddiApplication/api/Categories';
+        const url = 'http://esb01node01/ESBUddiApplication/api/Categories';
 
         return rp({
           uri: url,
@@ -140,7 +146,7 @@ export const resolvers = {
 
         });
       } else {
-        const url = 'http://esb01/ESBUddiApplication/api/Categories/' + id;
+        const url = 'http://esb01node01/ESBUddiApplication/api/Categories/' + id;
 
         return rp({
           uri: url,
@@ -159,6 +165,27 @@ export const resolvers = {
     },
 
     services: (root, args, context) => {
+
+      // client.search({
+      //   index: 'esb',
+      //   type: 'msg',
+      //   body: {
+      //     query: {
+      //       match: {
+      //         service_name: 'test_3'
+      //       },
+      //       filter: {
+      //         range: {
+      //           "start_date": { "gte": "2018-01-22"}
+      //         }
+      //       }
+      //     }
+      //   }
+      // }).then(function (resp) {
+      //     var hits = resp.hits.hits;
+      // }, function (err) {
+      //     console.trace(err.message);
+      // });
 
       // 'context' is optional parameter passed to graphqlHTTP middleware.
       // According to express-graphql GitHub repository documentation (https://github.com/graphql/express-graphql#options)
@@ -191,8 +218,8 @@ export const resolvers = {
       } else {
 
         const url = ( !args.categoryId ) ?
-                 'http://m2055895-w7/ESBUddiApplication/api/Services'
-                 : 'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+                 'http://esb01node01/ESBUddiApplication/api/Services'
+                 : 'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
 
         return rp({
           uri: url,
@@ -202,7 +229,18 @@ export const resolvers = {
           json: true
         }).then( res => {
 
-          return res;
+          return res.map( (service) => {
+
+            return {
+              id: service.ServiceID,
+              name: service.ServiceName,
+              categoryId: service.Category,
+              description: service.ServiceDescription,
+              address: service.ServiceURI,
+              sla: 150
+            }
+
+          });
 
         }).catch( (data) => {
           return Promise.reject(data.error.message);
