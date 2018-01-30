@@ -69,15 +69,10 @@ class EsbAPI {
     });
   }
 
-  static getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-
   static generateServiceId() {
     let min = Math.ceil(1);
     let max = Math.floor(1000);
-    return getRandomInt(min, max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
 };
@@ -293,7 +288,7 @@ export const resolvers = {
                            Date(),
                            input.affiliations);
       }
-      else { // TBD with after 'npm install mssql'
+      else { // TBD with after 'npm install mssql' or with a call to ESP API endpoint
 
         const url = 'http://esb01node01/ESBUddiApplication/api/Services';
 
