@@ -122,7 +122,8 @@ export const resolvers = {
 
       } else {
 
-        const url = 'http://esb01node01/ESBUddiApplication/api/Categories';
+        //const url = 'http://esb01node01/ESBUddiApplication/api/Categories';
+        const url = 'http://m2055895-w7/EsbUddiApplication/api/Categories';
 
         return rp({
           uri: url,
@@ -166,7 +167,9 @@ export const resolvers = {
 
         });
       } else {
-        const url = 'http://esb01node01/ESBUddiApplication/api/Categories/' + id;
+
+        //const url = 'http://esb01node01/ESBUddiApplication/api/Categories/' + id;
+        const url = 'http://m2055895-w7/ESBUddiApplication/api/Categories/' + id;
 
         return rp({
           uri: url,
@@ -238,8 +241,10 @@ export const resolvers = {
       } else {
 
         const url = ( !args.categoryId ) ?
-                 'http://esb01node01/ESBUddiApplication/api/Services'
-                 : 'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+                 //'http://esb01node01/ESBUddiApplication/api/Services'
+                 'http://m2055895-w7/ESBUddiApplication/api/Services'
+                 : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+                    'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
 
         return rp({
           uri: url,
@@ -252,12 +257,12 @@ export const resolvers = {
           return res.map( (service) => {
 
             return {
-              id: service.ServiceID,
+              id: service.ServiceId,
               name: service.ServiceName,
-              categoryId: service.Category,
+              categoryId: service.ServiceCategoryId,
               description: service.ServiceDescription,
-              address: service.ServiceURI,
-              sla: 150
+              address: service.ServiceUri,
+              sla: service.ExpectedSla
             }
 
           });
@@ -290,7 +295,8 @@ export const resolvers = {
       }
       else { // TBD with after 'npm install mssql' or with a call to ESP API endpoint
 
-        const url = 'http://esb01node01/ESBUddiApplication/api/Services';
+        //const url = 'http://esb01node01/ESBUddiApplication/api/Services';
+        const url = 'http://m2055895-w7/ESBUddiApplication/api/Services';
 
         return rp({
           method: 'POST',
