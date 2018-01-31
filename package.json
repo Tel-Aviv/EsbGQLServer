@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js --exec babel-node --presets es2015",
-    "debug": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk --mock",
+    "debug": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk",
+    "debug-mock": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk --mock",
     "flow": "flow",
     "test": "jest"
   },
