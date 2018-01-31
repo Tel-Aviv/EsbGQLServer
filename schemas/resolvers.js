@@ -303,22 +303,20 @@ export const resolvers = {
           uri: url,
           body: {
 
-            // {
-            //     "AuthenticationGroupId": 1,
-            //     "CreateTimestamp": "2015-03-10T00:00:00",
-            //     "ExpectedSla": 5000,
-            //     "Exposed": false,
-            //     "Impersonate": false,
-            //     "OwnerLogonname": "x6166614",
-            //     "PatternId": 1,
-            //     "ServiceCategoryId": 12,
-            //     "ServiceDescription": "infra",
-            //     "ServiceDocumentation": null,
-            //     "ServiceName": "rest routing service",
-            //     "ServiceUri": "ESBRestRoutingService/ESBRestRoutingService.svc",
-            //     "SoapAction": "Rest",
-            //     "Unc": 1
-            // }
+              "AuthenticationGroupId": 1,
+              "CreateTimestamp": "2015-03-10T00:00:00",
+              "ExpectedSla": 5000,
+              "Exposed": false,
+              "Impersonate": false,
+              "OwnerLogonname": "x6166614",
+              "PatternId": 1,
+              "ServiceCategoryId": 12,
+              "ServiceDescription": "infra",
+              "ServiceDocumentation": null,
+              "ServiceName": "rest routing service",
+              "ServiceUri": "ESBRestRoutingService/ESBRestRoutingService.svc",
+              "SoapAction": "Rest",
+              "Unc": 1
 
           },
           headers: {
@@ -326,6 +324,7 @@ export const resolvers = {
           },
           json: true
         }).then( res => {
+          console.log(res);
         }).catch( (error) => {
           console.log(error);
         });
