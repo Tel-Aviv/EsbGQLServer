@@ -6,6 +6,8 @@ import { resolvers } from './resolvers.js';
 
 const typeDefs = `
 
+scalar Date
+
 interface Node {
   # The id of the object.
   id: ID!
@@ -16,14 +18,32 @@ type User implements Node {
 }
 
 type Category implements Node {
+  """
+  This is globally unique ID for the object in entire system. Used for 'Node interface'.
+  """
   id: ID!
+
+  """
+  This is unique ID of the Category between other Categories
+  """
+  objectId: Int!
+
   name: String
   description: String
   services: [Service]
 }
 
 type Service implements Node {
+    """
+    This is globally unique ID for the object in entire system. Used for 'Node interface'.
+    """
     id: ID!
+
+    """
+    This is unique ID of the Service between other Services
+    """
+
+    objectId: Int!
     categoryId: Int
     name: String
     address: String!
@@ -68,5 +88,11 @@ type Subscription {
 }
 `;
 
-const schema = makeExecutableSchema({ typeDefs, resolvers });
+const logger = { log: (e) => console.log(e) } 
+
+const schema = makeExecutableSchema({
+  typeDefs,
+  resolvers,
+  logger
+});
 export { schema };
