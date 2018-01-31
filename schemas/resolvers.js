@@ -113,8 +113,7 @@ export const resolvers = {
 
               return {
                 id: category.CategoryId,
-                name: category.CategoryName,
-                description: category.Description
+                name: category.CategoryName
               }
             });
 
@@ -136,8 +135,7 @@ export const resolvers = {
           return res.map( (category) => {
             return {
               id: category.CategoryId,
-              name: category.CategoryName,
-              description: category.Description
+              name: category.CategoryName
             }
           });
 
@@ -161,7 +159,6 @@ export const resolvers = {
           return {
             id: res.CategoryId,
             name: res.CategoryName,
-            description: res.Description,
             services: services
           }
 
@@ -180,8 +177,7 @@ export const resolvers = {
         }).then( category => {
           return {
             id: category.CategoryId,
-            name: category.CategoryName,
-            description: category.Description
+            name: category.CategoryName
           }
         })
       }
