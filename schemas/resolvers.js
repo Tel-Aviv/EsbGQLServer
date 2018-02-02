@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import rp from 'request-promise';
-import { GraphQLError } from 'graphql/error';
+//import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
 import mockCategories from './MockCategories';
 import elasticsearch from 'elasticsearch';
