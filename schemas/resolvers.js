@@ -98,7 +98,7 @@ class Repository {
 
   constructor() {
     this.id = repositoryId;
-    
+
     this.services = this.services.bind(this);
     this.categories = this.categories.bind(this);
   }
@@ -152,7 +152,7 @@ class Repository {
 
     } else{
 
-      const url = ( !args.categoryId ) ?
+      const url = ( !categoryId ) ?
                //'http://esb01node01/ESBUddiApplication/api/Services'
                'http://m2055895-w7/ESBUddiApplication/api/Services'
                : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
@@ -169,7 +169,8 @@ class Repository {
         return res.map( (service) => (
 
           {
-            id: service.ServiceId,
+            id: casual.uuid,
+            objectId: service.ServiceId,
             name: service.ServiceName,
             categoryId: service.ServiceCategoryId,
             description: service.ServiceDescription,
