@@ -42,8 +42,8 @@ type Service implements Node {
     """
     This is unique ID of the Service between other Services
     """
-
     objectId: Int!
+    
     categoryId: Int
     name: String
     address: String!
@@ -52,6 +52,12 @@ type Service implements Node {
     when_published: String #Date
     affiliations: [String]
     available: Boolean
+}
+
+type Repository implements Node {
+  id: ID!
+  services(categoryId: Int): [Service]
+  categories: [Category]
 }
 
 # This type specifies the entry points into our API.
@@ -64,10 +70,7 @@ type Query {
       id: ID!
     ): Node
 
-    categories: [Category]
-    category(id: ID!) : Category
-    services(categoryId: Int): [Service]
-    service(name: String): Service
+    repository: Repository
 }
 
 input ServiceInput {
@@ -88,7 +91,7 @@ type Subscription {
 }
 `;
 
-const logger = { log: (e) => console.log(e) } 
+const logger = { log: (e) => console.log(e) }
 
 const schema = makeExecutableSchema({
   typeDefs,
