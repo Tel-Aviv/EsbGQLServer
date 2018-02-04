@@ -1,8 +1,11 @@
+import { GraphQLScalarType } from 'graphql';
+import { Kind } from 'graphql/language';
 import _ from 'lodash';
 import casual from 'casual';
 import rp from 'request-promise';
-//import { GraphQLError } from 'graphql/error';
+import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
+import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
 import elasticsearch from 'elasticsearch';
 
@@ -69,6 +72,17 @@ class EsbAPI {
         }, MOCK_TIMEOUT);
     })
   }
+
+  static getServiceRequests() {
+    return new Promise( (resolve, reject) => {
+
+      setTimeout( () => {
+
+        resolve(_.assign([], mockServiceRequests));
+
+      }, MOCK_TIMEOUT);
+    });
+  }
 }
 
 function isMockMode() {
@@ -97,8 +111,9 @@ const repositoryId = casual.uuid;
 class Repository {
 
   constructor() {
+
     this.id = repositoryId;
-    
+
     this.services = this.services.bind(this);
     this.categories = this.categories.bind(this);
   }
@@ -152,7 +167,7 @@ class Repository {
 
     } else{
 
-      const url = ( !args.categoryId ) ?
+      const url = ( !categoryId ) ?
                //'http://esb01node01/ESBUddiApplication/api/Services'
                'http://m2055895-w7/ESBUddiApplication/api/Services'
                : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
@@ -169,7 +184,8 @@ class Repository {
         return res.map( (service) => (
 
           {
-            id: service.ServiceId,
+            id: casual.uuid,
+            objectId: service.ServiceId,
             name: service.ServiceName,
             categoryId: service.ServiceCategoryId,
             description: service.ServiceDescription,
@@ -233,6 +249,48 @@ class Repository {
 
     }
   }
+
+  serviceRequests() {
+
+    //if( isMockMode() ) {
+      let promise = EsbAPI.getServiceRequests();
+      return promise.then( res => {
+
+        return res.map( (request) => {
+
+          return {
+            id:  request.id,
+            objectId: request.ServiceRequestId,
+            domain: 'DOM',
+            created: request.created,
+            address: request.ServiceUri
+          }
+
+        });
+
+      });
+    //} else {
+    //
+    //}
+  }
+}
+
+class ServiceRequest {
+  constructor(id,
+              objectId: integer,
+              operationName: string,
+              uri: string,
+              soapAction: string,
+              unc: integer,
+              created: Date) {
+    this.id = id;
+    this.objectId = objectId;
+    this.operationName = operationName;
+    this.address = uri;
+    this.soapAction = soapAction;
+    this.domain = (unc == 1) ? 'AZURE' : 'DOMAIN';
+    this.created = new Date(created);
+  }
 }
 
 export const resolvers = {
@@ -246,21 +304,24 @@ export const resolvers = {
   },
 
   Mutation: {
-    publishService: function(_, {input}, context) {
+
+    addService: function(_, {input}, context) {
       if( isMockMode() ) {
         let serviceId = casual.uuid;
-        return new Service(serviceId,
-                           input.name,
-                           input.address,
-                           input.description,
-                           input.sla,
-                           Date(),
-                           input.affiliations);
+        return new ServiceRequest(casual.uuid,
+                           casual.integer(2000, 3000),
+                           casual.title,
+                           casual.url,
+                           casual.url,
+                           1,
+                           new Date());
       }
-      else { // TBD with after 'npm install mssql' or with a call to ESP API endpoint
+      else {
 
         //const url = 'http://esb01node01/ESBUddiApplication/api/Services';
         const url = 'http://m2055895-w7/ESBUddiApplication/api/Services';
+
+        let unc = ( input.domain == 'AZURE') ? 1 : 0;
 
         return rp({
           method: 'POST',
@@ -269,18 +330,19 @@ export const resolvers = {
 
               "AuthenticationGroupId": 1,
               "CreateTimestamp": "2015-03-10T00:00:00",
-              "ExpectedSla": 5000,
+              "ExpectedSla": input.sla,
               "Exposed": false,
               "Impersonate": false,
               "OwnerLogonname": "x6166614",
               "PatternId": 1,
-              "ServiceCategoryId": 12,
+              "ServiceCategoryId": input.categoryId,
               "ServiceDescription": "infra",
               "ServiceDocumentation": null,
-              "ServiceName": "rest routing service",
-              "ServiceUri": "ESBRestRoutingService/ESBRestRoutingService.svc",
-              "SoapAction": "Rest",
-              "Unc": 1
+              "ServiceName": input.name,
+              "ServiceUri": input.address,
+              "ServiceWsdl": "http://esb01/xx/ESBRestRoutingService.svc?wsdl",
+              "SoapAction": input.soapAction,
+              "Unc": unc
 
           },
           headers: {
@@ -289,12 +351,30 @@ export const resolvers = {
           json: true
         }).then( res => {
           console.log(res);
+
+          return new ServiceRequest(casual.uuid,
+                                    res.RequestId,
+                                    res.OperationName,
+                                    res.ServiceUri,
+                                    res.ServiceSoapAction,
+                                    res.Unc,
+                                    res.PublishRequestDate);
+
         }).catch( (error) => {
           console.log(error);
+          return new GraphQLError(error);
         });
 
       }
-    }
+    },
+
+    publishServiceRequest: function(_, {input}, context) {
+        if( isMockMode() ) {
+
+        } else {
+            //const url = 'http://m2055895-w7/ESBUddiApplication/api/Services';
+        }
+    },
   }
 
 }

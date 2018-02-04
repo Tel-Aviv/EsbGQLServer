@@ -43,7 +43,7 @@ type Service implements Node {
     This is unique ID of the Service between other Services
     """
     objectId: Int!
-    
+
     categoryId: Int
     name: String
     address: String!
@@ -54,10 +54,27 @@ type Service implements Node {
     available: Boolean
 }
 
+enum esbDomain {
+  AZURE
+  DOM
+}
+
+type ServiceRequest implements Node {
+  id: ID!
+  objectId: Int
+  operationName: String,
+  address: String,
+  soapAction: String,
+  sla: Int!
+  domain: esbDomain
+  created: Date
+}
+
 type Repository implements Node {
   id: ID!
   services(categoryId: Int): [Service]
   categories: [Category]
+  serviceRequests: [ServiceRequest]
 }
 
 # This type specifies the entry points into our API.
@@ -77,13 +94,16 @@ input ServiceInput {
   name: String!
   categoryId: Int!
   address: String!
+  soapAction: String
   description: String
   sla: Int
+  domain: esbDomain
   affiliations: [String]
 }
 
 type Mutation {
-  publishService(input: ServiceInput): Service
+  addService(input: ServiceInput): ServiceRequest
+  publishServiceRequest(input: Int): Service
 }
 
 type Subscription {
