@@ -1,6 +1,7 @@
 import _ from 'lodash';
+import casual from 'casual';
 import rp from 'request-promise';
-import { GraphQLError } from 'graphql/error';
+//import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
 import mockCategories from './MockCategories';
 import elasticsearch from 'elasticsearch';
@@ -51,31 +52,24 @@ class EsbAPI {
       }, MOCK_TIMEOUT);
     });
 
- }
+  }
 
- static getServicesByCategoryId(categoryId: number) {
+  static getServicesByCategoryId(categoryId: number) {
 
     return new Promise( (resolve, reject) => {
 
         setTimeout( () => {
 
            let categorizedServices = mockServices.filter( (service) => {
-             return service.categoryId == categoryId;
+             return service.CategoryId == categoryId;
            });
 
            resolve(_.assign([], categorizedServices));
 
         }, MOCK_TIMEOUT);
-    });
+    })
   }
-
-  static generateServiceId() {
-    let min = Math.ceil(1);
-    let max = Math.floor(1000);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-};
+}
 
 function isMockMode() {
 
@@ -98,13 +92,103 @@ class Service {
   }
 }
 
-export const resolvers = {
+const repositoryId = casual.uuid;
 
-  Query: {
+class Repository {
 
-    categories: (root, args, context) => {
+  constructor() {
+    this.id = repositoryId;
+    
+    this.services = this.services.bind(this);
+    this.categories = this.categories.bind(this);
+  }
 
-      if( isMockMode() ) {
+  services(param) {
+
+    const categoryId = param.categoryId;
+    if( isMockMode() ) {
+
+      if( !categoryId ) {
+
+        let promise = EsbAPI.getAllServices();
+        return promise.then( res => (
+
+          res.map( service => (
+
+            {
+              id: casual.uuid,
+              objectId: service.ServiceId,
+              categoryId: service.CategoryId,
+              name: service.ServiceName,
+              address: service.ServiceUrl,
+              sla: service.ServiceSLA
+            }
+
+          ))
+
+        ));
+
+      } else {
+
+        let promise = EsbAPI.getServicesByCategoryId(categoryId);
+        return promise.then( res => (
+
+           res.map( service => (
+
+            {
+              id: casual.uuid,
+              objectId: service.ServiceId,
+              categoryId: service.CategoryId,
+              name: service.ServiceName,
+              address: service.ServiceUrl,
+              sla: service.ServiceSLA
+            }
+
+          ))
+
+        ));
+
+      }
+
+    } else{
+
+      const url = ( !args.categoryId ) ?
+               //'http://esb01node01/ESBUddiApplication/api/Services'
+               'http://m2055895-w7/ESBUddiApplication/api/Services'
+               : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+                  'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+
+      return rp({
+        uri: url,
+        headers: {
+          'User-Agent': 'GraphQL'
+        },
+        json: true
+      }).then( res => {
+
+        return res.map( (service) => (
+
+          {
+            id: service.ServiceId,
+            name: service.ServiceName,
+            categoryId: service.ServiceCategoryId,
+            description: service.ServiceDescription,
+            address: service.ServiceUri,
+            sla: service.ExpectedSla
+          }
+
+        ));
+
+      }).catch( (data) => {
+        return Promise.reject(data.error.message);
+      })
+
+    }
+  }
+
+  categories() {
+
+    if( isMockMode() ) {
 
         let promise = EsbAPI.getAllCategories();
         return promise.then( res => {
@@ -112,14 +196,15 @@ export const resolvers = {
             return res.map( (category) => {
 
               return {
-                id: category.CategoryId,
+                id: casual.uuid,
+                objectId: category.CategoryId,
                 name: category.CategoryName
               }
             });
 
         });
 
-      } else {
+    } else {
 
         //const url = 'http://esb01node01/ESBUddiApplication/api/Categories';
         const url = 'http://m2055895-w7/EsbUddiApplication/api/Categories';
@@ -134,7 +219,8 @@ export const resolvers = {
 
           return res.map( (category) => {
             return {
-              id: category.CategoryId,
+              id: casual.uuid,
+              objectId: category.CategoryId,
               name: category.CategoryName
             }
           });
@@ -144,143 +230,25 @@ export const resolvers = {
         })
 
         return categories;
-      }
-    },
 
-    category: (root, {id}) => {
-
-      if( isMockMode() ) {
-
-        let promise = EsbAPI.getCategory(id);
-        return promise.then ( res => {
-
-          let services = mockServices.filter( s => s.categoryId == id );
-
-          return {
-            id: res.CategoryId,
-            name: res.CategoryName,
-            services: services
-          }
-
-        });
-      } else {
-
-        //const url = 'http://esb01node01/ESBUddiApplication/api/Categories/' + id;
-        const url = 'http://m2055895-w7/ESBUddiApplication/api/Categories/' + id;
-
-        return rp({
-          uri: url,
-          headers: {
-            'User-Agent': 'GraphQL'
-          },
-          json: true
-        }).then( category => {
-          return {
-            id: category.CategoryId,
-            name: category.CategoryName
-          }
-        })
-      }
-    },
-
-    services: (root, args, context) => {
-
-      // client.search({
-      //   index: 'esb',
-      //   type: 'msg',
-      //   body: {
-      //     query: {
-      //       match: {
-      //         service_name: 'test_3'
-      //       },
-      //       filter: {
-      //         range: {
-      //           "start_date": { "gte": "2018-01-22"}
-      //         }
-      //       }
-      //     }
-      //   }
-      // }).then(function (resp) {
-      //     var hits = resp.hits.hits;
-      // }, function (err) {
-      //     console.trace(err.message);
-      // });
-
-      // 'context' is optional parameter passed to graphqlHTTP middleware.
-      // According to express-graphql GitHub repository documentation (https://github.com/graphql/express-graphql#options)
-      // this parameter is arbitrary value passed to resolvers.
-      // The most important part of this invokation is following statement:
-      // "If <i>context<i> is nor provided, the <i>request</i> object is passed as the context.
-      //
-      // So because we din't touched 'context' object on Express, we get it here as the request
-      // parameter - named context
-
-      const categoryId = args.categoryId;
-
-      if( isMockMode() ) {
-
-        if( !categoryId ) {
-
-          let promise = EsbAPI.getAllServices();
-          return promise.then( _services => {
-            return _services;
-          });
-
-        } else {
-
-          let promise = EsbAPI.getServicesByCategoryId(categoryId);
-          return promise.then( _services => {
-            return _services;
-          });
-
-        }
-      } else {
-
-        const url = ( !args.categoryId ) ?
-                 //'http://esb01node01/ESBUddiApplication/api/Services'
-                 'http://m2055895-w7/ESBUddiApplication/api/Services'
-                 : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
-                    'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
-
-        return rp({
-          uri: url,
-          headers: {
-            'User-Agent': 'GraphQL'
-          },
-          json: true
-        }).then( res => {
-
-          return res.map( (service) => {
-
-            return {
-              id: service.ServiceId,
-              name: service.ServiceName,
-              categoryId: service.ServiceCategoryId,
-              description: service.ServiceDescription,
-              address: service.ServiceUri,
-              sla: service.ExpectedSla
-            }
-
-          });
-
-        }).catch( (data) => {
-          return Promise.reject(data.error.message);
-        })
-
-      }
-
-    },
-
-    service: (root, {name}) => {
-        const service = services.find(service => service.name == name);
-        return service;
     }
+  }
+}
+
+export const resolvers = {
+
+  Query: {
+
+    repository: (_, args, context) => {
+      return new Repository();
+    }
+
   },
 
   Mutation: {
     publishService: function(_, {input}, context) {
       if( isMockMode() ) {
-        let serviceId = EsbAPI.generateServiceId();
+        let serviceId = casual.uuid;
         return new Service(serviceId,
                            input.name,
                            input.address,
@@ -325,14 +293,6 @@ export const resolvers = {
           console.log(error);
         });
 
-        // let serviceId = 888;
-        // return new Service(serviceId,
-        //                      input.name,
-        //                      input.address,
-        //                      input.description,
-        //                      input.sla,
-        //                      Date(),
-        //                      input.affiliations);
       }
     }
   }
