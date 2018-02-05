@@ -58,6 +58,13 @@ class EsbAPI {
 
   }
 
+  static getService(objectId: number) : Service {
+    return new Service(casual.uuid,
+                      casual.integer(300, 400),
+                      casual.title,
+                      casual.url);
+  }
+
   static getServicesByCategoryId(categoryId: number) : Promise {
 
     return new Promise( (resolve, reject) => {
@@ -291,23 +298,52 @@ class Summary {
   }
 }
 
+class Serie {
+  constructor(name: string) {
+    this.id = casual.uuid;
+    this.label = name
+    this.data = [1,2,3];
+  }
+}
+
+class Series {
+  constructor(servicesIds: number[]) {
+    this.id = casual.uuid;
+
+    this.labels = ['03/02/2018', '04/02/2018', '05/02/2018'];
+
+    this.series = [];
+    for(let i = 0; i < servicesIds.length; i++) {
+      let service = EsbAPI.getService(servicesIds[i]);
+      this.series.push(new Serie(service.name));
+    }
+  }
+}
+
 class EsbRuntime {
+
+  distribution(param) {
+    let servicesIds: ?number[] = param.servicesIds;
+    let when: number = param.daysBefore;
+
+    return new Series(servicesIds);
+  }
 
   totalCalls(param) {
 
-    let services: ?number[] = param.services;
+    let services: ?number[] = param.servicesIds;
 
     let summaries = [];
-    if( isMockMode() ) {
+    //if( isMockMode() ) {
 
       for(let i = 0; i <= param.when; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
         summaries.push(new Summary(date, casual.integer(10000,30000)));
       }
-    } else {
-
-    }
+    // } else {
+    //
+    // }
 
     return summaries;
   }
@@ -316,15 +352,15 @@ class EsbRuntime {
 
     let summaries = [];
 
-    if( isMockMode() ) {
+    //if( isMockMode() ) {
       for(let i = 0; i <= param.when; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
         summaries.push(new Summary(new Date(), casual.integer(10, 30)));
       }
-    } else {
-
-    }
+    // } else {
+    //
+    // }
 
     return summaries;
   }
@@ -333,15 +369,15 @@ class EsbRuntime {
 
     let summaries = [];
 
-    if( isMockMode() ) {
+    //if( isMockMode() ) {
       for(let i = 0; i <= param.when; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
         summaries.push(new Summary(new Date(), casual.integer(0, 10)));
       }
-    } else {
-
-    }
+    // } else {
+    //
+    // }
 
     return summaries;
   }
