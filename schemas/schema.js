@@ -84,11 +84,27 @@ type Summary implements Node {
   value: Int
 }
 
+type Serie implements Node {
+  id: ID!
+
+  label: String!
+  data: [Int!]!
+}
+
+type Series implements Node {
+  id: ID!
+
+  labels: [String!]!
+  series: [Serie!]!
+}
+
 type Runtime implements Node {
   id: ID!
-  totalCalls(when: Date, services: [Int]): [Summary]
+  totalCalls(when: Date, servicesIds: [Int]): [Summary]
   latency(when: Date): [Summary] #in milliseconds
   errors(when: Date): [Summary]
+
+  distribution(daysBefore: Int, servicesIds: [Int]) : Series
 }
 
 # This type specifies the entry points into our API.
