@@ -1,3 +1,4 @@
+// @flow
 import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
 import _ from 'lodash';
@@ -18,7 +19,7 @@ const MOCK_TIMEOUT = 1000;
 
 class EsbAPI {
 
-  static getCategory(categoryId: number) {
+  static getCategory(categoryId: number) : Promise {
 
     return new Promise( (resolve, reject) => {
 
@@ -32,7 +33,7 @@ class EsbAPI {
 
   }
 
-  static getAllCategories() {
+  static getAllCategories(): Promise {
 
     return new Promise( (resolve, reject) => {
 
@@ -44,7 +45,7 @@ class EsbAPI {
     })
   }
 
-  static getAllServices() {
+  static getAllServices() : Promise {
 
     return new Promise( (resolve, reject) => {
 
@@ -57,7 +58,7 @@ class EsbAPI {
 
   }
 
-  static getServicesByCategoryId(categoryId: number) {
+  static getServicesByCategoryId(categoryId: number) : Promise {
 
     return new Promise( (resolve, reject) => {
 
@@ -73,7 +74,7 @@ class EsbAPI {
     })
   }
 
-  static getServiceRequests() {
+  static getServiceRequests() : Promise {
     return new Promise( (resolve, reject) => {
 
       setTimeout( () => {
@@ -85,28 +86,37 @@ class EsbAPI {
   }
 }
 
-function isMockMode() {
+function isMockMode(): boolean {
 
-  let mockToken = process.argv.find( (arg) => {
+  let mockToken = process.argv.find( (arg: string) => {
     return arg == "--mock"
-  })
+  });
 
   return mockToken;
 }
 
 class Service {
-  constructor(id, name, address, description, sla, when_published, affiliations) {
+
+  constructor(id: string,
+              objectId: number,
+              name: string,
+              address: string,
+              description: string,
+              sla: number,
+              categoryId: number,
+              when_published: Date) {
     this.id = id;
+    this.objectId = objectId;
     this.name = name;
     this.address = address;
     this.description = description;
     this.sla = sla;
+    this.categoryId = categoryId;
     this.when_published = when_published;
-    this.affiliations = affiliations;
   }
 }
 
-const repositoryId = casual.uuid;
+const repositoryId : string = casual.uuid;
 
 class Repository {
 
@@ -245,8 +255,6 @@ class Repository {
           return Promise.reject(data.error.message);
         })
 
-        return categories;
-
     }
   }
 
@@ -273,18 +281,84 @@ class Repository {
     //
     //}
   }
+
+}
+
+class Summary {
+  constructor(date: Date, value: number) {
+    this.date = date;
+    this.value = value;
+  }
+}
+
+class EsbRuntime {
+
+  totalCalls(param) {
+
+    let services: ?number[] = param.services;
+
+    let summaries = [];
+    if( isMockMode() ) {
+
+      for(let i = 0; i <= param.when; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(date, casual.integer(10000,30000)));
+      }
+    } else {
+
+    }
+
+    return summaries;
+  }
+
+  latency(param) {
+
+    let summaries = [];
+
+    if( isMockMode() ) {
+      for(let i = 0; i <= param.when; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(new Date(), casual.integer(10, 30)));
+      }
+    } else {
+
+    }
+
+    return summaries;
+  }
+
+  errors(param) {
+
+    let summaries = [];
+
+    if( isMockMode() ) {
+      for(let i = 0; i <= param.when; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(new Date(), casual.integer(0, 10)));
+      }
+    } else {
+
+    }
+
+    return summaries;
+  }
 }
 
 class ServiceRequest {
-  constructor(id,
-              objectId: integer,
+  constructor(id: string,
+              objectId: number,
+              categoryId: number,
               operationName: string,
               uri: string,
               soapAction: string,
-              unc: integer,
+              unc: number = 1 | 2,
               created: Date) {
     this.id = id;
     this.objectId = objectId;
+    this.categoryId = categoryId;
     this.operationName = operationName;
     this.address = uri;
     this.soapAction = soapAction;
@@ -299,20 +373,26 @@ export const resolvers = {
 
     repository: (_, args, context) => {
       return new Repository();
-    }
+    },
 
+    runtime: (_, args, context) => {
+      return new EsbRuntime()
+    }
   },
 
   Mutation: {
 
     addService: function(_, {input}, context) {
+
       if( isMockMode() ) {
+
         let serviceId = casual.uuid;
-        return new ServiceRequest(casual.uuid,
+        return new ServiceRequest(serviceId,
                            casual.integer(2000, 3000),
+                           input.categoryId,
                            casual.title,
                            casual.url,
-                           casual.url,
+                           input.soapAction,
                            1,
                            new Date());
       }
@@ -354,6 +434,7 @@ export const resolvers = {
 
           return new ServiceRequest(casual.uuid,
                                     res.RequestId,
+                                    res.CategoryID,
                                     res.OperationName,
                                     res.ServiceUri,
                                     res.ServiceSoapAction,
@@ -368,9 +449,19 @@ export const resolvers = {
       }
     },
 
-    publishServiceRequest: function(_, {input}, context) {
-        if( isMockMode() ) {
+    publishServiceRequest: function(_, {input}, context): Service {
 
+        let requestId: number = input;
+
+        if( isMockMode() ) {
+            return new Service(casual.uuid,
+                               casual.integer(300, 400),
+                               casual.title,
+                               casual.url,
+                               casual.description,
+                               casual.integer(100, 200),
+                               casual.integer(1,2),
+                               new Date());
         } else {
             //const url = 'http://m2055895-w7/ESBUddiApplication/api/Services';
         }
