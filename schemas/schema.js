@@ -62,6 +62,7 @@ enum esbDomain {
 type ServiceRequest implements Node {
   id: ID!
   objectId: Int
+  categoryId: Int
   operationName: String,
   address: String,
   soapAction: String,
@@ -77,6 +78,19 @@ type Repository implements Node {
   serviceRequests: [ServiceRequest]
 }
 
+type Summary implements Node {
+  id: ID!
+  date: Date
+  value: Int
+}
+
+type Runtime implements Node {
+  id: ID!
+  totalCalls(when: Date, services: [Int]): [Summary]
+  latency(when: Date): [Summary] #in milliseconds
+  errors(when: Date): [Summary]
+}
+
 # This type specifies the entry points into our API.
 type Query {
 
@@ -88,6 +102,7 @@ type Query {
     ): Node
 
     repository: Repository
+    runtime: Runtime
 }
 
 input ServiceInput {
