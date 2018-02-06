@@ -62,6 +62,7 @@ enum esbDomain {
 type ServiceRequest implements Node {
   id: ID!
   objectId: Int
+  name: String
   categoryId: Int
   operationName: String,
   address: String,
@@ -100,7 +101,7 @@ type Series implements Node {
 
 type Runtime implements Node {
   id: ID!
-  totalCalls(when: Date, servicesIds: [Int]): [Summary]
+  totalCalls(when: Date): [Summary]
   latency(when: Date): [Summary] #in milliseconds
   errors(when: Date): [Summary]
 
