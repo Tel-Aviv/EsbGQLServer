@@ -275,9 +275,13 @@ class Repository {
 
           return {
             id:  request.id,
-            objectId: request.ServiceRequestId,
+            address: request.ServiceUri,
+            operationName: request.OperationName,
+            name: request.ServiceName,
+            objectId: request.RequestId,
+            categoryId: request.ServiceCategoryId,
             domain: 'DOM',
-            created: request.created,
+            created: request.PublishRequestDate,
             address: request.ServiceUri
           }
 
@@ -285,7 +289,7 @@ class Repository {
 
       });
     //} else {
-    //
+    // http://m2055895-w7/ESBUddiApplication/api/Publish
     //}
   }
 
@@ -330,8 +334,6 @@ class EsbRuntime {
   }
 
   totalCalls(param) {
-
-    let services: ?number[] = param.servicesIds;
 
     let summaries = [];
     //if( isMockMode() ) {
