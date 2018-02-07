@@ -267,7 +267,7 @@ class Repository {
 
   serviceRequests() {
 
-    //if( isMockMode() ) {
+    if( isMockMode() ) {
       let promise = EsbAPI.getServiceRequests();
       return promise.then( res => {
 
@@ -279,18 +279,45 @@ class Repository {
             operationName: request.OperationName,
             name: request.ServiceName,
             objectId: request.RequestId,
-            categoryId: request.ServiceCategoryId,
+            categoryId: request.CategoryId,
             domain: 'DOM',
             created: request.PublishRequestDate,
-            address: request.ServiceUri
           }
 
         });
 
       });
-    //} else {
-    // http://m2055895-w7/ESBUddiApplication/api/Publish
-    //}
+    } else {
+
+      //const url = 'http://esb01/ESBUddiApplication/api/PublishRequest';
+      const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest'
+
+      return rp({
+        uri: url,
+        headers: {
+          'User-Agent': 'GraphQL'
+        },
+        json: true
+      }).then( res => {
+
+        return res.map( (request) => {
+          return {
+            id:  casual.uuid,
+            objectId: request.RequestId,
+            address: request.Url,
+            operationName: request.OperationName,
+            name: request.ServiceName,
+            categoryId: request.CategoryId,
+            domain: 'DOM',
+            created: request.PublishRequestDate
+          }
+        });
+
+      }).catch( (data) => {
+        return Promise.reject(data.error.message);
+      })
+
+    }
   }
 
 }
@@ -501,7 +528,21 @@ export const resolvers = {
                                casual.integer(1,2),
                                new Date());
         } else {
-            //const url = 'http://m2055895-w7/ESBUddiApplication/api/Services';
+            const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
+
+            return rp({
+              method: 'POST',
+              uri: url,
+              headers: {
+                'User-Agent': 'GraphQL',
+                'Accept': 'application/json'
+              },
+              json: true
+            }).then( res => {
+              console.log(res);
+            }).catch( (error) => {
+              console.log(error);
+            });
         }
     },
   }
