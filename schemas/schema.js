@@ -136,6 +136,8 @@ input ServiceInput {
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
   publishServiceRequest(input: Int): Service
+  disableService(input: Int): Service
+  deleteService(input: Int): Service
 }
 
 type Subscription {
