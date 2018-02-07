@@ -540,11 +540,44 @@ export const resolvers = {
               json: true
             }).then( res => {
               console.log(res);
-            }).catch( (error) => {
-              console.log(error);
+            }).catch( err => {
+              console.log(err);
+              return new GraphQLError(err.error.Message);
             });
         }
     },
+
+    disableService(_, {input}, context) {
+
+      //if( isMockMode() ) {
+
+        let serviceId = casual.uuid;
+        return new ServiceRequest(serviceId,
+                           casual.integer(2000, 3000),
+                           input.categoryId,
+                           casual.title,
+                           casual.url,
+                           input.soapAction,
+                           1,
+                           new Date());
+      //}
+    },
+
+    deleteService(_, {input}, context) {
+      //if( isMockMode() ) {
+
+        let serviceId = casual.uuid;
+        return new ServiceRequest(serviceId,
+                           casual.integer(2000, 3000),
+                           input.categoryId,
+                           casual.title,
+                           casual.url,
+                           input.soapAction,
+                           1,
+                           new Date());
+      //}
+      
+    }
   }
 
 }
