@@ -74,7 +74,9 @@ type ServiceRequest implements Node {
 
 type Repository implements Node {
   id: ID!
-  services(categoryId: Int): [Service]
+  services(categoryId: Int,
+           page: Int,
+           pageSize: Int): [Service]
   categories: [Category]
   serviceRequests: [ServiceRequest]
 }
