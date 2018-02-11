@@ -135,9 +135,9 @@ class Repository {
     this.categories = this.categories.bind(this);
   }
 
-  services(param) {
+  services({categoryId, page, pageSize}) {
 
-    const categoryId = param.categoryId;
+    //const categoryId = param.categoryId;
     if( isMockMode() ) {
 
       if( !categoryId ) {
@@ -576,7 +576,7 @@ export const resolvers = {
                            1,
                            new Date());
       //}
-      
+
     }
   }
 
