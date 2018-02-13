@@ -466,8 +466,6 @@ export const resolvers = {
         //const url = 'http://esb01node01/ESBUddiApplication/api/Services';
         const url = 'http://m2055895-w7/ESBUddiApplication/api/Services';
 
-        let unc = ( input.domain == 'AZURE') ? 1 : 0;
-
         return rp({
           method: 'POST',
           uri: url,
@@ -479,16 +477,15 @@ export const resolvers = {
               "Exposed": false,
               "Impersonate": false,
               "OwnerLogonname": "x6166614",
-              "PatternId": 1,
-              "ServiceCategoryId": input.categoryId,
-              "ServiceDescription": "infra",
+              "PatternId": "Soap",
+              "CategoryId": input.categoryId,
+              "Description": "",
               "ServiceDocumentation": null,
-              "ServiceName": input.name,
-              "ServiceUri": input.address,
-              "ServiceWsdl": "http://esb01/xx/ESBRestRoutingService.svc?wsdl",
+              "Name": input.name,
+              "Url": input.address,
+              "WsdlUrl": "http://esb01/xx/ESBRestRoutingService.svc?wsdl",
               "SoapAction": input.soapAction,
-              "Unc": unc
-
+              "Enviroment": input.environment
           },
           headers: {
             'User-Agent': 'GraphQL'
@@ -500,15 +497,15 @@ export const resolvers = {
           return new ServiceRequest(casual.uuid,
                                     res.RequestId,
                                     res.CategoryID,
-                                    res.OperationName,
+                                    res.ServiceName,
                                     res.ServiceUri,
                                     res.ServiceSoapAction,
                                     res.Unc,
                                     res.PublishRequestDate);
 
         }).catch( (error) => {
-          console.log(error);
-          return new GraphQLError(error);
+          console.log(error.message);
+          return new GraphQLError(error.message);
         });
 
       }
