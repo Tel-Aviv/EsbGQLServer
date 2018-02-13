@@ -54,21 +54,16 @@ type Service implements Node {
     available: Boolean
 }
 
-enum esbDomain {
-  AZURE
-  DOM
-}
-
 type ServiceRequest implements Node {
   id: ID!
   objectId: Int
   name: String
   categoryId: Int
-  operationName: String,
-  address: String,
-  soapAction: String,
+  operationName: String
+  address: String
+  soapAction: String
   sla: Int!
-  domain: esbDomain
+  environment: String!
   created: Date
 }
 
@@ -131,7 +126,7 @@ input ServiceInput {
   soapAction: String
   description: String
   sla: Int
-  domain: esbDomain
+  environment: String!
   affiliations: [String]
 }
 
