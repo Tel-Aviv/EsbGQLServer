@@ -9,7 +9,6 @@ const typeDefs = `
 scalar Date
 
 interface Node {
-  # The id of the object.
   id: ID!
 }
 
@@ -18,14 +17,8 @@ type User implements Node {
 }
 
 type Category implements Node {
-  """
-  This is globally unique ID for the object in entire system. Used for 'Node interface'.
-  """
   id: ID!
 
-  """
-  This is unique ID of the Category between other Categories
-  """
   objectId: Int!
 
   name: String
@@ -34,14 +27,8 @@ type Category implements Node {
 }
 
 type Service implements Node {
-    """
-    This is globally unique ID for the object in entire system. Used for 'Node interface'.
-    """
     id: ID!
 
-    """
-    This is unique ID of the Service between other Services
-    """
     objectId: Int!
 
     categoryId: Int
@@ -105,13 +92,11 @@ type Runtime implements Node {
   distribution(daysBefore: Int, servicesIds: [Int]) : Series
 }
 
-# This type specifies the entry points into our API.
 type Query {
 
     viewer: User
-    # Fetches an object given its ID
-    node(
-      # The ID of an object
+
+    node(      
       id: ID!
     ): Node
 
