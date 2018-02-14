@@ -308,7 +308,7 @@ class Repository {
             operationName: request.OperationName,
             name: request.ServiceName,
             categoryId: request.CategoryId,
-            domain: 'DOM',
+            environment: 'DOM',
             created: request.PublishRequestDate
           }
         });
@@ -471,21 +471,18 @@ export const resolvers = {
           uri: url,
           body: {
 
-              "AuthenticationGroupId": 1,
-              "CreateTimestamp": "2015-03-10T00:00:00",
-              "ExpectedSla": input.sla,
-              "Exposed": false,
-              "Impersonate": false,
-              "OwnerLogonname": "x6166614",
-              "PatternId": "Soap",
-              "CategoryId": input.categoryId,
-              "Description": "",
-              "ServiceDocumentation": null,
               "Name": input.name,
+              "Description": null,
               "Url": input.address,
-              "WsdlUrl": "http://esb01/xx/ESBRestRoutingService.svc?wsdl",
               "SoapAction": input.soapAction,
-              "Enviroment": input.environment
+              "WsdlUrl": input.wsdlUrl,
+              "ExpectedSla": input.sla,
+              "PatternId": "Soap",
+              "Documentation": null,
+              "CategoryId": input.categoryId,
+              "Environment": input.environment,
+              "OperationName" : null,
+              "TargetNameSpace": null
           },
           headers: {
             'User-Agent': 'GraphQL'
