@@ -275,12 +275,12 @@ class Repository {
 
           return {
             id:  request.id,
-            address: request.ServiceUri,
+            address: request.Url,
             operationName: request.OperationName,
             name: request.ServiceName,
             objectId: request.RequestId,
             categoryId: request.CategoryId,
-            domain: 'DOM',
+            environment: 'DOM',
             created: request.PublishRequestDate,
           }
 
