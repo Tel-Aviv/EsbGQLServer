@@ -108,6 +108,7 @@ input ServiceInput {
   name: String!
   categoryId: Int!
   address: String!
+  pattern: String!
   soapAction: String
   sla: Int
   environment: String!
