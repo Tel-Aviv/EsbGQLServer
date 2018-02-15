@@ -96,7 +96,7 @@ type Query {
 
     viewer: User
 
-    node(      
+    node(
       id: ID!
     ): Node
 
@@ -109,10 +109,8 @@ input ServiceInput {
   categoryId: Int!
   address: String!
   soapAction: String
-  description: String
   sla: Int
   environment: String!
-  affiliations: [String]
 }
 
 type Mutation {
