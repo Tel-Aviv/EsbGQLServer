@@ -117,6 +117,7 @@ input ServiceInput {
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
   publishServiceRequest(input: Int): Service
+  deleteServiceRequest(input: Int): Boolean
   disableService(input: Int): Service
   deleteService(input: Int): Service
 }
