@@ -541,6 +541,32 @@ export const resolvers = {
         }
     },
 
+    deleteServiceRequest: function(_, {input}, context) {
+
+      let requestId = input;
+
+      if( isMockMode() ) {
+          return true;
+      } else {
+        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
+        return rp({
+          method: 'DELETE',
+          uri: url,
+          headers: {
+            'User-Agent': 'GraphQL',
+            'Accept': 'application/json'
+          },
+          json: true
+        }).then( res => {
+          return true;
+        }).catch( err => {
+          console.log(err);
+          return new GraphQLError(err.error.Message);
+        })
+      }
+
+    },
+
     disableService(_, {input}, context) {
 
       //if( isMockMode() ) {
