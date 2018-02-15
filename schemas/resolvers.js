@@ -477,7 +477,7 @@ export const resolvers = {
               "SoapAction": input.soapAction,
               "WsdlUrl": input.wsdlUrl,
               "ExpectedSla": input.sla,
-              "PatternId": input.pattern,
+              "Pattern": input.pattern,
               "Documentation": null,
               "CategoryId": input.categoryId,
               "Environment": input.environment,
