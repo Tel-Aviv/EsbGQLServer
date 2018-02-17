@@ -365,6 +365,10 @@ class Series {
 
 class EsbRuntime {
 
+  constructor() {
+    this.id = casual.uuid;
+  }
+
   distribution(param) {
     let servicesIds: ?number[] = param.servicesIds;
     let when: number = param.daysBefore;
