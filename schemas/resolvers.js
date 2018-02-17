@@ -343,10 +343,10 @@ class Summary {
 }
 
 class Serie {
-  constructor(name: string) {
+  constructor(name: string, daysBefore: number) {
     this.id = casual.uuid;
-    this.label = name
-    this.data = [1,2,3];
+    this.label = name;
+    this.data = casual.array_of_digits(daysBefore)
   }
 }
 
@@ -356,7 +356,7 @@ class Series {
     this.id = casual.uuid;
 
     let labels = []
-    for(let i = 0; i <= daysBefore; i++) {
+    for(let i = 0; i < daysBefore; i++) {
       let date = new Date();
       date.setDate(date.getDate() - i);
       labels.push(moment(date).format('DD/MM/YYYY'));
@@ -367,7 +367,7 @@ class Series {
     this.series = [];
     for(let i = 0; i < servicesIds.length; i++) {
       let service = EsbAPI.getService(servicesIds[i]);
-      this.series.push(new Serie(service.name));
+      this.series.push(new Serie(service.name, daysBefore));
     }
   }
 }
