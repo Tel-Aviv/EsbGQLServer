@@ -89,7 +89,7 @@ type Runtime implements Node {
   latency(before: Date): [Summary] #in milliseconds
   errors(before: Date): [Summary]
 
-  distribution(daysBefore: Int, servicesIds: [Int]) : Series
+  distribution(daysBefore: Int, servicesIds: [Int]!) : Series
 }
 
 type Query {
