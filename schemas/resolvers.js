@@ -376,12 +376,12 @@ class EsbRuntime {
     return new Series(servicesIds);
   }
 
-  totalCalls(param) {
+  totalCalls({before}) {
 
     let summaries = [];
     //if( isMockMode() ) {
 
-      for(let i = 0; i <= param.when; i++) {
+      for(let i = 0; i <= before; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
         summaries.push(new Summary(date, casual.integer(10000,30000)));
@@ -393,12 +393,12 @@ class EsbRuntime {
     return summaries;
   }
 
-  latency(param) {
+  latency({before}) {
 
     let summaries = [];
 
     //if( isMockMode() ) {
-      for(let i = 0; i <= param.when; i++) {
+      for(let i = 0; i <= before; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
         summaries.push(new Summary(new Date(), casual.integer(10, 30)));
@@ -410,12 +410,12 @@ class EsbRuntime {
     return summaries;
   }
 
-  errors(param) {
+  errors({before}) {
 
     let summaries = [];
 
     //if( isMockMode() ) {
-      for(let i = 0; i <= param.when; i++) {
+      for(let i = 0; i <= before; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
         summaries.push(new Summary(new Date(), casual.integer(0, 10)));
