@@ -369,11 +369,11 @@ class EsbRuntime {
     this.id = casual.uuid;
   }
 
-  distribution(param) {
-    let servicesIds: ?number[] = param.servicesIds;
-    let when: number = param.daysBefore;
+  distribution({daysBefore, servicesIds}) {
+    let _servicesIds: ?number[] = servicesIds;
+    let _when: number = daysBefore;
 
-    return new Series(servicesIds);
+    return new Series(_servicesIds);
   }
 
   totalCalls({before}) {
