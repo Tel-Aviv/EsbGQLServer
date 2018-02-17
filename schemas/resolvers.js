@@ -328,9 +328,20 @@ class Repository {
 
 }
 
+var statuses = ['INFO', 'WARNING', 'ERROR'];
+
 class Trace {
-  constructor(id) {
+  constructor(id, storyId) {
     this.id = id
+    this.storyId = storyId;
+    this.time = new Date();
+    this.message = 'Request recived';
+    this.eventId = casual.integer(1, 1000);
+    this.status = casual.random_element(statuses);
+
+    let service = casual.random_element(mockServices);
+    this.serviceName = service.ServiceName;
+    this.serviceId = service.ServiceId;
   }
 }
 
@@ -625,7 +636,9 @@ export const resolvers = {
     },
 
     addTrace: (_, args) => {
-      const newTrace = new Trace(casual.uuid);
+      const newTrace = new Trace(casual.uuid, // id
+                                 casual.uuid // storyId
+                               );
       pubsub.publish(TRACE_ADDED_TOPIC, {
           traceAdded: newTrace
       });
@@ -643,8 +656,10 @@ export const resolvers = {
 
           setInterval( () => {
 
-            const newTrace = new Trace(casual.uuid);
-            return  pubsub.publish(TRACE_ADDED_TOPIC, {
+            const newTrace = new Trace(casual.uuid, //id
+                                       casual.uuid // storyId);
+                                     );
+            return pubsub.publish(TRACE_ADDED_TOPIC, {
                                                         traceAdded: newTrace
                                                        });
 
