@@ -85,9 +85,9 @@ type Series implements Node {
 
 type Runtime implements Node {
   id: ID!
-  totalCalls(when: Date): [Summary]
-  latency(when: Date): [Summary] #in milliseconds
-  errors(when: Date): [Summary]
+  totalCalls(before: Date): [Summary]
+  latency(before: Date): [Summary] #in milliseconds
+  errors(before: Date): [Summary]
 
   distribution(daysBefore: Int, servicesIds: [Int]) : Series
 }
@@ -129,7 +129,7 @@ type Trace {
 }
 
 type Subscription {
-    traceAdded: Trace
+    traceAdded(serviceId: Int): Trace
 }
 `;
 
