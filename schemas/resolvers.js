@@ -3,6 +3,7 @@ import { GraphQLScalarType } from 'graphql';
 import { Kind } from 'graphql/language';
 import _ from 'lodash';
 import casual from 'casual';
+import moment from 'moment';
 import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
@@ -350,10 +351,18 @@ class Serie {
 }
 
 class Series {
-  constructor(servicesIds: number[]) {
+  constructor(daysBefore: number,
+              servicesIds: number[]) {
     this.id = casual.uuid;
 
-    this.labels = ['03/02/2018', '04/02/2018', '05/02/2018'];
+    let labels = []
+    for(let i = 0; i <= daysBefore; i++) {
+      let date = new Date();
+      date.setDate(date.getDate() - i);
+      labels.push(moment(date).format('DD/MM/YYYY'));
+    }
+
+    this.labels = labels;
 
     this.series = [];
     for(let i = 0; i < servicesIds.length; i++) {
@@ -371,9 +380,9 @@ class EsbRuntime {
 
   distribution({daysBefore, servicesIds}) {
     let _servicesIds: ?number[] = servicesIds;
-    let _when: number = daysBefore;
+    let _daysBefore: number = daysBefore;
 
-    return new Series(_servicesIds);
+    return new Series(_daysBefore, _servicesIds);
   }
 
   totalCalls({before}) {
