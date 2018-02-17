@@ -335,6 +335,7 @@ class Trace {
 
 class Summary {
   constructor(date: Date, value: number) {
+    this.id = casual.uuid;
     this.date = date;
     this.value = value;
   }
