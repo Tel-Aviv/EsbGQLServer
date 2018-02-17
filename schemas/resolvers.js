@@ -10,6 +10,11 @@ import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
 import elasticsearch from 'elasticsearch';
 
+import { PubSub } from 'graphql-subscriptions';
+
+const pubsub = new PubSub();
+const TRACE_ADDED_TOPIC = 'newTrace';
+
 var client = new elasticsearch.Client({
   host: '10.1.70.47:9200',
   log: 'trace'
@@ -322,6 +327,12 @@ class Repository {
 
 }
 
+class Trace {
+  constructor(id) {
+    this.id = id
+  }
+}
+
 class Summary {
   constructor(date: Date, value: number) {
     this.date = date;
@@ -597,7 +608,37 @@ export const resolvers = {
                            new Date());
       //}
 
-    }
-  }
+    },
 
+    addTrace: (_, args) => {
+      const newTrace = new Trace(casual.uuid);
+      pubsub.publish(TRACE_ADDED_TOPIC, {
+          traceAdded: newTrace
+      });
+      return newTrace;
+    },
+
+  },
+
+
+  Subscription: {
+
+      traceAdded: {
+        subscribe: () => {
+          console.log('Subscribe');
+
+          setInterval( () => {
+
+            const newTrace = new Trace(casual.uuid);
+            return  pubsub.publish(TRACE_ADDED_TOPIC, {
+                                                        traceAdded: newTrace
+                                                       });
+
+          }, 2000);
+
+          return pubsub.asyncIterator(TRACE_ADDED_TOPIC);
+        }
+      }
+
+    }
 }

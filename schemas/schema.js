@@ -120,10 +120,16 @@ type Mutation {
   deleteServiceRequest(input: Int): Boolean
   disableService(input: Int): Service
   deleteService(input: Int): Service
+
+  addTrace(name: String!) : Trace
+}
+
+type Trace {
+  id: ID!
 }
 
 type Subscription {
-  traceAdded(serviceId: ID!): String
+    traceAdded: Trace
 }
 `;
 
