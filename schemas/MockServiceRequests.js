@@ -9,6 +9,8 @@ const mockServiceRequests = [{
   Wsdl: casual.url,
   CategoryId: casual.integer(1, 50),
   SoapAction: casual.url,
+  ExpectedSla: 250,
+  Environment: 'DOM',
   PublishRequestDate: new Date(),
 }, {
   id: 401,
@@ -19,6 +21,8 @@ const mockServiceRequests = [{
   Wsdl: casual.url,
   CategoryId: casual.integer(1, 50),
   SoapAction: casual.url,
+  ExpectedSla: 250,
+  Environment: 'DOM',
   PublishRequestDate: new Date(),
 }];
 
