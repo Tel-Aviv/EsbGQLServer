@@ -286,7 +286,8 @@ class Repository {
             name: request.ServiceName,
             objectId: request.RequestId,
             categoryId: request.CategoryId,
-            environment: 'DOM',
+            sla: request.ExpectedSla,
+            environment: request.Environment,
             created: request.PublishRequestDate,
           }
 
@@ -314,7 +315,8 @@ class Repository {
             operationName: request.OperationName,
             name: request.ServiceName,
             categoryId: request.CategoryId,
-            environment: 'DOM',
+            environment: request.Environment,
+            sla: request.ExpectedSla,
             created: request.PublishRequestDate
           }
         });
@@ -335,7 +337,7 @@ class Trace {
     this.id = id
     this.storyId = storyId;
     this.time = new Date();
-    this.message = 'Request recived';
+    this.message = 'Request received';
     this.eventId = casual.integer(1, 1000);
     this.status = casual.random_element(statuses);
 
