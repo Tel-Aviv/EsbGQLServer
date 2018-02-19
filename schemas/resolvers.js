@@ -677,16 +677,6 @@ export const resolvers = {
 
     },
 
-    addTrace: (_, args) => {
-      const newTrace = new Trace(casual.uuid, // id
-                                 casual.uuid // storyId
-                               );
-      pubsub.publish(TRACE_ADDED_TOPIC, {
-          traceAdded: newTrace
-      });
-      return newTrace;
-    },
-
   },
 
 
