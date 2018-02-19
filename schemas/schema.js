@@ -114,10 +114,17 @@ input ServiceInput {
   environment: String!
 }
 
+type Message {
+  id: Int
+  text: String
+}
+
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
+
   publishServiceRequest(input: Int): Service
-  deleteServiceRequest(input: Int): ServiceRequest
+  deleteServiceRequest(requestID: Int): ServiceRequest
+
   disableService(input: Int): Service
   deleteService(input: Int): Service
 
