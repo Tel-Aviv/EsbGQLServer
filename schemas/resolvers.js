@@ -12,6 +12,7 @@ import mockCategories from './MockCategories';
 import elasticsearch from 'elasticsearch';
 
 import { PubSub } from 'graphql-subscriptions';
+import { KafkaPubSub } from 'graphql-kafka-subscriptions'
 
 const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
