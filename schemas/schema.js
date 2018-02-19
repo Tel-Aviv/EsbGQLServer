@@ -127,8 +127,6 @@ type Mutation {
 
   disableService(input: Int): Service
   deleteService(input: Int): Service
-
-  addTrace(name: String!) : Trace
 }
 
 type Trace {
