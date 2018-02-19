@@ -452,20 +452,24 @@ class EsbRuntime {
 
 class ServiceRequest {
   constructor(id: string,
+              name: string,
               objectId: number,
               categoryId: number,
               operationName: string,
               uri: string,
               soapAction: string,
-              unc: number = 1 | 2,
+              environment: number = 1 | 2,
+              sla: number,
               created: Date) {
     this.id = id;
+    this.name = name;
     this.objectId = objectId;
     this.categoryId = categoryId;
     this.operationName = operationName;
     this.address = uri;
     this.soapAction = soapAction;
-    this.domain = (unc == 1) ? 'AZURE' : 'DOMAIN';
+    this.environment = (environment == 1) ? 'External' : 'Internal';
+    this.sla = sla,
     this.created = new Date(created);
   }
 }
@@ -491,12 +495,14 @@ export const resolvers = {
 
         let serviceId = casual.uuid;
         return new ServiceRequest(serviceId,
+                           casual.title,
                            casual.integer(2000, 3000),
                            input.categoryId,
                            casual.title,
                            casual.url,
                            input.soapAction,
                            1,
+                           casual.integer(200, 1000),
                            new Date());
       }
       else {
@@ -530,12 +536,14 @@ export const resolvers = {
           console.log(res);
 
           return new ServiceRequest(casual.uuid,
-                                    res.RequestId,
-                                    res.CategoryID,
                                     res.ServiceName,
-                                    res.ServiceUri,
+                                    res.RequestId,
+                                    res.CategoryId,
+                                    res.ServiceName,
+                                    res.Url,
                                     res.ServiceSoapAction,
-                                    res.Unc,
+                                    res.Environment,
+                                    res.ExpectedSla,
                                     res.PublishRequestDate);
 
         }).catch( (error) => {
@@ -611,12 +619,14 @@ export const resolvers = {
 
         let serviceId = casual.uuid;
         return new ServiceRequest(serviceId,
+                           casual.title,
                            casual.integer(2000, 3000),
                            input.categoryId,
                            casual.title,
                            casual.url,
                            input.soapAction,
                            1,
+                           casual.integer(200, 1000),
                            new Date());
       //}
     },
@@ -626,12 +636,14 @@ export const resolvers = {
 
         let serviceId = casual.uuid;
         return new ServiceRequest(serviceId,
+                           casual.title,
                            casual.integer(2000, 3000),
                            input.categoryId,
                            casual.title,
                            casual.url,
                            input.soapAction,
                            1,
+                           casual.integer(200, 1000),
                            new Date());
       //}
 
