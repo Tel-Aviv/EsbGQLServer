@@ -175,10 +175,11 @@ class Repository {
 
             {
               id: casual.uuid,
-              objectId: service.ServiceId,
+              objectId: service.Id,
               categoryId: service.CategoryId,
-              name: service.ServiceName,
-              address: service.ServiceUrl,
+              name: service.Name,
+              address: service.Url,
+              environment: service.environment,
               sla: service.ServiceSLA
             }
 
@@ -190,11 +191,15 @@ class Repository {
 
     } else{
 
-      const url = ( !categoryId ) ?
+      let url = ( !categoryId ) ?
                //'http://esb01node01/ESBUddiApplication/api/Services'
                'http://m2055895-w7/ESBUddiApplication/api/Services'
                : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
-                  'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+               'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
+
+      if( page )
+          // 'http://esb01node01/ESBUddiApplication/api/Services'
+          url = `http://m2055895-w7/ESBUddiApplication/api/Services?pageNum=${page}&pageSize=${pageSize}`;
 
       return rp({
         uri: url,
@@ -202,17 +207,19 @@ class Repository {
           'User-Agent': 'GraphQL'
         },
         json: true
-      }).then( res => {
+      }).then( ({list, totalRows}) => {
 
-        return res.map( (service) => (
+        return list.map( (service) => (
 
           {
             id: casual.uuid,
             objectId: service.ServiceId,
-            name: service.ServiceName,
-            categoryId: service.ServiceCategoryId,
-            description: service.ServiceDescription,
-            address: service.ServiceUri,
+            name: service.Name,
+            categoryId: service.CategoryId,
+            description: service.Description,
+            address: service.Url,
+            pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
+            environment: ( service.Environment == 1 ) ? "Internal" : "External",
             sla: service.ExpectedSla
           }
 
