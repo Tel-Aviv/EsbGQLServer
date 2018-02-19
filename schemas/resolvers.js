@@ -602,9 +602,9 @@ export const resolvers = {
         }
     },
 
-    deleteServiceRequest: function(_, {requestID}) {
+    deleteServiceRequest: function(_, {requestId} : { requestId: number}) {
 
-      const _id = 'sreq' + requestID;
+      const _id = 'sreq' + requestId;
 
       if( isMockMode() ) {
 
@@ -616,7 +616,7 @@ export const resolvers = {
         return serviceRequest;
 
       } else {
-        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
+        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + _id;
         return rp({
           method: 'DELETE',
           uri: url,
@@ -700,27 +700,22 @@ export const resolvers = {
 
           return pubsub.asyncIterator(SERVICE_REQUEST_DELETED_TOPIC);
         }
-        // resolve: (payload, args, context, info) => {
-        //   // Manipulate and return the new value
-        //
-        //   return payload;
-        // },
       },
 
       traceAdded: {
         subscribe: () => {
           console.log('Subscribed to traceAdded');
 
-          // setInterval( () => {
-          //
-          //   const newTrace = new Trace(casual.uuid, //id
-          //                              casual.uuid // storyId);
-          //                            );
-          //   return pubsub.publish(TRACE_ADDED_TOPIC, {
-          //                                               traceAdded: newTrace
-          //                                              });
-          //
-          // }, 2000);
+          setInterval( () => {
+
+            const newTrace = new Trace(casual.uuid, //id
+                                       casual.uuid // storyId);
+                                     );
+            return pubsub.publish(TRACE_ADDED_TOPIC, {
+                                                        traceAdded: newTrace
+                                                       });
+
+          }, 2000);
 
           return pubsub.asyncIterator(TRACE_ADDED_TOPIC);
         }
