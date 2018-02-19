@@ -15,6 +15,7 @@ import { PubSub } from 'graphql-subscriptions';
 
 const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
+const SERVICE_REQUEST_DELETED_TOPIC = 'deletedServiceRequest';
 
 var client = new elasticsearch.Client({
   host: '10.1.70.47:9200',
@@ -127,6 +128,7 @@ class Service {
     this.categoryId = categoryId;
     this.when_published = when_published;
   }
+
 }
 
 const repositoryId : string = casual.uuid;
@@ -316,7 +318,7 @@ class Repository {
 
         return res.map( (request) => {
           return {
-            id:  casual.uuid,
+            id:  'sreq' + request.RequestId, //casual.uuid,
             objectId: request.RequestId,
             address: request.Url,
             operationName: request.OperationName,
@@ -352,6 +354,7 @@ class Trace {
     this.serviceName = service.ServiceName;
     this.serviceId = service.ServiceId;
   }
+
 }
 
 class Summary {
@@ -360,6 +363,7 @@ class Summary {
     this.date = date;
     this.value = value;
   }
+
 }
 
 class Serie {
@@ -368,6 +372,7 @@ class Serie {
     this.label = name;
     this.data = casual.array_of_digits(daysBefore)
   }
+
 }
 
 class Series {
@@ -390,6 +395,7 @@ class Series {
       this.series.push(new Serie(service.name, daysBefore));
     }
   }
+
 }
 
 class EsbRuntime {
@@ -455,6 +461,7 @@ class EsbRuntime {
 
     return summaries;
   }
+
 }
 
 class ServiceRequest {
@@ -479,6 +486,7 @@ class ServiceRequest {
     this.sla = sla,
     this.created = new Date(created);
   }
+
 }
 
 export const resolvers = {
@@ -599,7 +607,13 @@ export const resolvers = {
       let requestId = input;
 
       if( isMockMode() ) {
-          return true;
+
+        let serviceRequest = new ServiceRequest('sreq' + requestId)
+        pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
+            deletedServiceRequest: serviceRequest
+        });
+        return serviceRequest;
+
       } else {
         const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
         return rp({
@@ -611,7 +625,13 @@ export const resolvers = {
           },
           json: true
         }).then( res => {
-          return true;
+
+          let serviceRequest = new ServiceRequest('sreq' + requestId)
+          pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
+              deletedServiceRequest: serviceRequest
+          });
+          return serviceRequest;
+
         }).catch( err => {
           console.log(err);
           return new GraphQLError(err.error.Message);
@@ -671,9 +691,16 @@ export const resolvers = {
 
   Subscription: {
 
+      serviceRequestDeleted: {
+        subscribe: () => {
+          console.log('Subscribed to serviceRequestDeleted');
+          return pubsub.asyncIterator(SERVICE_REQUEST_DELETED_TOPIC);
+        }
+      },
+
       traceAdded: {
         subscribe: () => {
-          console.log('Subscribe');
+          console.log('Subscribed to traceAdded');
 
           setInterval( () => {
 
