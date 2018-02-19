@@ -123,7 +123,7 @@ type Mutation {
   addService(input: ServiceInput): ServiceRequest
 
   publishServiceRequest(input: Int): Service
-  deleteServiceRequest(requestID: Int): ServiceRequest
+  deleteServiceRequest(requestId: Int): ServiceRequest
 
   disableService(input: Int): Service
   deleteService(input: Int): Service
