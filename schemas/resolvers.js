@@ -15,7 +15,7 @@ import { PubSub } from 'graphql-subscriptions';
 
 const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
-const SERVICE_REQUEST_DELETED_TOPIC = 'deletedServiceRequest';
+const SERVICE_REQUEST_DELETED_TOPIC = 'deletedSReq';
 
 var client = new elasticsearch.Client({
   host: '10.1.70.47:9200',
@@ -157,11 +157,11 @@ class Repository {
 
             {
               id: casual.uuid,
-              objectId: service.ServiceId,
+              objectId: service.Id,
               categoryId: service.CategoryId,
-              name: service.ServiceName,
-              address: service.ServiceUrl,
-              sla: service.ServiceSLA
+              name: service.Name,
+              address: service.Url,
+              sla: service.ExpectedSla
             }
 
           ))
@@ -602,15 +602,16 @@ export const resolvers = {
         }
     },
 
-    deleteServiceRequest: function(_, {input}, context) {
+    deleteServiceRequest: function(_, {requestID}) {
 
-      let requestId = input;
+      const _id = 'sreq' + requestID;
 
       if( isMockMode() ) {
 
-        let serviceRequest = new ServiceRequest('sreq' + requestId)
+        const serviceRequest = new ServiceRequest(_id);
+
         pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
-            deletedServiceRequest: serviceRequest
+            serviceRequestDeleted: serviceRequest
         });
         return serviceRequest;
 
@@ -626,7 +627,7 @@ export const resolvers = {
           json: true
         }).then( res => {
 
-          let serviceRequest = new ServiceRequest('sreq' + requestId)
+          let serviceRequest = new ServiceRequest(_id);
           pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
               deletedServiceRequest: serviceRequest
           });
@@ -645,7 +646,7 @@ export const resolvers = {
       //if( isMockMode() ) {
 
         let serviceId = casual.uuid;
-        return new ServiceRequest(serviceId,
+        return new Service(serviceId,
                            casual.title,
                            casual.integer(2000, 3000),
                            input.categoryId,
@@ -662,7 +663,7 @@ export const resolvers = {
       //if( isMockMode() ) {
 
         let serviceId = casual.uuid;
-        return new ServiceRequest(serviceId,
+        return new Service(serviceId,
                            casual.title,
                            casual.integer(2000, 3000),
                            input.categoryId,
@@ -691,27 +692,35 @@ export const resolvers = {
 
   Subscription: {
 
+      // Subscriptions resolvers are not a functions,
+      // but an objects with subscribe method, than returns AsyncIterable.
       serviceRequestDeleted: {
         subscribe: () => {
           console.log('Subscribed to serviceRequestDeleted');
+
           return pubsub.asyncIterator(SERVICE_REQUEST_DELETED_TOPIC);
         }
+        // resolve: (payload, args, context, info) => {
+        //   // Manipulate and return the new value
+        //
+        //   return payload;
+        // },
       },
 
       traceAdded: {
         subscribe: () => {
           console.log('Subscribed to traceAdded');
 
-          setInterval( () => {
-
-            const newTrace = new Trace(casual.uuid, //id
-                                       casual.uuid // storyId);
-                                     );
-            return pubsub.publish(TRACE_ADDED_TOPIC, {
-                                                        traceAdded: newTrace
-                                                       });
-
-          }, 2000);
+          // setInterval( () => {
+          //
+          //   const newTrace = new Trace(casual.uuid, //id
+          //                              casual.uuid // storyId);
+          //                            );
+          //   return pubsub.publish(TRACE_ADDED_TOPIC, {
+          //                                               traceAdded: newTrace
+          //                                              });
+          //
+          // }, 2000);
 
           return pubsub.asyncIterator(TRACE_ADDED_TOPIC);
         }
