@@ -30,14 +30,14 @@ type Service implements Node {
     id: ID!
 
     objectId: Int!
-
     categoryId: Int
     name: String
     address: String!
     description: String
     sla: Int
     when_published: String #Date
-    affiliations: [String]
+    pattern: String!,
+    environment: String!,
     available: Boolean
 }
 
@@ -117,7 +117,7 @@ input ServiceInput {
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
   publishServiceRequest(input: Int): Service
-  deleteServiceRequest(input: Int): Boolean
+  deleteServiceRequest(input: Int): ServiceRequest
   disableService(input: Int): Service
   deleteService(input: Int): Service
 
@@ -138,6 +138,7 @@ type Trace {
 
 type Subscription {
     traceAdded(serviceId: Int): Trace
+    serviceRequestDeleted: ServiceRequest
 }
 `;
 
