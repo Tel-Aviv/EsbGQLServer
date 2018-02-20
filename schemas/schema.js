@@ -54,11 +54,17 @@ type ServiceRequest implements Node {
   created: Date
 }
 
+type SetInfo implements Node {
+  id: ID!
+  totalItems: Int
+  list:  [Service]
+}
+
 type Repository implements Node {
   id: ID!
   services(categoryId: Int,
            page: Int,
-           pageSize: Int): [Service]
+           pageSize: Int): SetInfo
   categories: [Category]
   serviceRequests: [ServiceRequest]
 }
