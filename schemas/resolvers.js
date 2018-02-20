@@ -352,8 +352,8 @@ class Trace {
     this.status = casual.random_element(statuses);
 
     let service = casual.random_element(mockServices);
-    this.serviceName = service.ServiceName;
-    this.serviceId = service.ServiceId;
+    this.serviceName = service.Name;
+    this.serviceId = service.Id;
   }
 
 }
