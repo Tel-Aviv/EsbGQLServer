@@ -53,6 +53,10 @@ class EsbAPI {
     })
   }
 
+  static getServicesCount() : number {
+    return mockServices.length;
+  }
+
   static getAllServices() : Promise {
 
     return new Promise( (resolve, reject) => {
@@ -113,7 +117,7 @@ function isMockMode(): boolean {
 class SetInfo {
 
   constructor(total, list) {
-    this.id = casual.uuid; 
+    this.id = casual.uuid;
     this.totalItems = total;
     this.list = list;
   }
@@ -162,27 +166,33 @@ class Repository {
       if( !categoryId ) {
 
         let promise = EsbAPI.getAllServices();
-        return promise.then( res => (
 
-          res.map( service => (
+        return new SetInfo(EsbAPI.getServicesCount(),
+          promise.then( res => (
 
-            {
-              id: casual.uuid,
-              objectId: service.Id,
-              categoryId: service.CategoryId,
-              name: service.Name,
-              address: service.Url,
-              sla: service.ExpectedSla
-            }
+            res.map( service => (
 
-          ))
+              {
+                id: casual.uuid,
+                objectId: service.Id,
+                categoryId: service.CategoryId,
+                name: service.Name,
+                address: service.Url,
+                sla: service.ExpectedSla
+              }
 
-        ));
+            ))
+
+        ))
+
+      )
 
       } else {
 
         let promise = EsbAPI.getServicesByCategoryId(categoryId);
-        return promise.then( res => (
+
+        return new SetInfo(EsbAPI.getServicesCount(),
+          promise.then( res => (
 
            res.map( service => (
 
@@ -198,7 +208,8 @@ class Repository {
 
           ))
 
-        ));
+        ))
+      );
 
       }
 
