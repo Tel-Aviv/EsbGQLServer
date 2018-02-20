@@ -173,7 +173,7 @@ class Repository {
             res.map( service => (
 
               {
-                id: casual.uuid,
+                id: 'svc' +  service.Id,
                 objectId: service.Id,
                 categoryId: service.CategoryId,
                 name: service.Name,
@@ -197,7 +197,7 @@ class Repository {
            res.map( service => (
 
             {
-              id: casual.uuid,
+              id: 'svc' + service.Id,
               objectId: service.Id,
               categoryId: service.CategoryId,
               name: service.Name,
@@ -235,7 +235,7 @@ class Repository {
 
         let services = list.map( (service) => (
           {
-            id: casual.uuid,
+            id: 'svc' + service.ServiceId,
             objectId: service.ServiceId,
             name: service.Name,
             categoryId: service.CategoryId,
