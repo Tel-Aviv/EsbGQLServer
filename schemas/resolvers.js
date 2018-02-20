@@ -12,7 +12,7 @@ import mockCategories from './MockCategories';
 import elasticsearch from 'elasticsearch';
 
 import { PubSub } from 'graphql-subscriptions';
-import { KafkaPubSub } from 'graphql-kafka-subscriptions'
+//import { KafkaPubSub } from 'graphql-kafka-subscriptions'
 
 const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
@@ -108,6 +108,16 @@ function isMockMode(): boolean {
   });
 
   return mockToken;
+}
+
+class SetInfo {
+
+  constructor(total, list) {
+    this.id = casual.uuid; 
+    this.totalItems = total;
+    this.list = list;
+  }
+
 }
 
 class Service {
@@ -212,8 +222,7 @@ class Repository {
         json: true
       }).then( ({list, totalRows}) => {
 
-        return list.map( (service) => (
-
+        let services = list.map( (service) => (
           {
             id: casual.uuid,
             objectId: service.ServiceId,
@@ -225,8 +234,9 @@ class Repository {
             environment: ( service.Environment == 1 ) ? "Internal" : "External",
             sla: service.ExpectedSla
           }
-
         ));
+
+        return new SetInfo(totalRows, services);
 
       }).catch( (data) => {
         return Promise.reject(data.error.message);
@@ -610,14 +620,13 @@ export const resolvers = {
       if( isMockMode() ) {
 
         const serviceRequest = new ServiceRequest(_id);
-
         pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
             serviceRequestDeleted: serviceRequest
         });
         return serviceRequest;
 
       } else {
-        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + _id;
+        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
         return rp({
           method: 'DELETE',
           uri: url,
@@ -630,7 +639,7 @@ export const resolvers = {
 
           let serviceRequest = new ServiceRequest(_id);
           pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
-              deletedServiceRequest: serviceRequest
+              serviceRequestDeleted: serviceRequest
           });
           return serviceRequest;
 
