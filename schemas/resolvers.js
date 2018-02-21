@@ -15,25 +15,39 @@ import elasticsearch from 'elasticsearch';
 import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
 
-var consumer = new Kafka.SimpleConsumer({
-  connectionString: "10.1.70.101:9092",
-  asyncCompression: true
-})
+if( !isMockMode() ) {
 
-var dataHandler = function(messageSet, topic, partition){
+    var consumer = new Kafka.SimpleConsumer({
+      connectionString: "10.1.70.101:9092",
+      asyncCompression: true
+    })
 
-  messageSet.forEach(function (m){
+    var dataHandler = function(messageSet, topic, partition){
 
-    const message = m.message.value.toString('utf-8');
-    console.log(message)
-  })
+      messageSet.forEach(function (m){
 
+        const message = m.message.value.toString('utf-8');
+        var trace = JSON.parse(message);
+        let newTrace = new Trace(casual.uuid,
+                                 trace.message_guid,
+                                 "ERROR",
+                                 trace.service_name,
+                                 trace.service_id
+                               );
+
+        pubsub.publish(TRACE_ADDED_TOPIC, {
+                                            traceAdded: newTrace
+                                         });
+
+      })
+
+    }
+
+    consumer.init().then( function() {
+      return consumer.subscribe('esbmsgs_ppr', 0,
+                                dataHandler);
+    })
 }
-
-consumer.init().then( function() {
-  return consumer.subscribe('esbmsgs_ppr', 0,
-                            dataHandler);
-})
 
 const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
@@ -93,7 +107,7 @@ class EsbAPI {
 
   static getService(objectId: number) : Service {
     return new Service(casual.uuid,
-                      casual.integer(300, 400),
+                      objectId,
                       casual.title,
                       casual.url);
   }
@@ -382,20 +396,21 @@ class Repository {
 
 }
 
-var statuses = ['INFO', 'WARNING', 'ERROR'];
-
 class Trace {
-  constructor(id, storyId) {
+  constructor(id,
+              storyId,
+              status: string,
+              serviceName: string,
+              serviceId) {
     this.id = id
     this.storyId = storyId;
     this.time = new Date();
     this.message = 'Request received';
     this.eventId = casual.integer(1, 1000);
-    this.status = casual.random_element(statuses);
+    this.status = status;
 
-    let service = casual.random_element(mockServices);
-    this.serviceName = service.Name;
-    this.serviceId = service.Id;
+    this.serviceName = serviceName;
+    this.serviceId = serviceId;
   }
 
 }
@@ -739,16 +754,25 @@ export const resolvers = {
         subscribe: () => {
           console.log('Subscribed to traceAdded');
 
-          setInterval( () => {
+          if( isMockMode() ) {
+            setInterval( () => {
 
-            const newTrace = new Trace(casual.uuid, //id
-                                       casual.uuid // storyId);
-                                     );
-            return pubsub.publish(TRACE_ADDED_TOPIC, {
-                                                        traceAdded: newTrace
-                                                       });
+              let service = casual.random_element(mockServices);
+              var statuses = ['INFO', 'WARNING', 'ERROR'];
+              let status = casual.random_element(statuses);
 
-          }, 2000);
+              const newTrace = new Trace(casual.uuid, //id
+                                         casual.uuid, // storyId
+                                         status,
+                                         service.Name,
+                                         service.Id
+                                       );
+              return pubsub.publish(TRACE_ADDED_TOPIC, {
+                                                          traceAdded: newTrace
+                                                         });
+
+            }, 2000);
+          }
 
           return pubsub.asyncIterator(TRACE_ADDED_TOPIC);
         }
