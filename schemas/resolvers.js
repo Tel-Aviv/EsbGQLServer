@@ -9,10 +9,31 @@ import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
 import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
+import Kafka from 'no-kafka';
 import elasticsearch from 'elasticsearch';
 
 import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
+
+var consumer = new Kafka.SimpleConsumer({
+  connectionString: "10.1.70.101:9092",
+  asyncCompression: true
+})
+
+var dataHandler = function(messageSet, topic, partition){
+
+  messageSet.forEach(function (m){
+
+    const message = m.message.value.toString('utf-8');
+    console.log(message)
+  })
+
+}
+
+consumer.init().then( function() {
+  return consumer.subscribe('esbmsgs_ppr', 0,
+                            dataHandler);
+})
 
 const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
@@ -389,10 +410,11 @@ class Summary {
 }
 
 class Serie {
-  constructor(name: string, daysBefore: number) {
+  constructor(name: string, daysBefore: number, serviceId: number) {
     this.id = casual.uuid;
     this.label = name;
-    this.data = casual.array_of_digits(daysBefore)
+    this.data = casual.array_of_digits(daysBefore);
+    this.serviceId = serviceId;
   }
 
 }
@@ -414,7 +436,7 @@ class Series {
     this.series = [];
     for(let i = 0; i < servicesIds.length; i++) {
       let service = EsbAPI.getService(servicesIds[i]);
-      this.series.push(new Serie(service.name, daysBefore));
+      this.series.push(new Serie(service.name, daysBefore, service.objectId));
     }
   }
 
