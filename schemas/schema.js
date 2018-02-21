@@ -80,6 +80,7 @@ type Serie implements Node {
 
   label: String!
   data: [Int!]!
+  serviceId: Int!
 }
 
 type Series implements Node {
