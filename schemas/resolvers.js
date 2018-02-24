@@ -53,9 +53,9 @@ const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
 const SERVICE_REQUEST_DELETED_TOPIC = 'deletedSReq';
 
+const esHost = isMockMode() ? 'localhost' : '10.1.70.47';
 var elasticClient = new elasticsearch.Client({
-  //host: '10.1.70.47:9200',
-  host: 'localhost:9200',
+  host: `${esHost}:9200`
   //log: 'trace'
 });
 
