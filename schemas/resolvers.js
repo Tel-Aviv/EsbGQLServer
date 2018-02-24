@@ -53,10 +53,15 @@ const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
 const SERVICE_REQUEST_DELETED_TOPIC = 'deletedSReq';
 
-var client = new elasticsearch.Client({
-  host: '10.1.70.47:9200',
-  log: 'trace'
+var elasticClient = new elasticsearch.Client({
+  //host: '10.1.70.47:9200',
+  host: 'localhost:9200',
+  //log: 'trace'
 });
+
+elasticClient.cluster.health({}, function(err, resp, status) {
+  console.log("Elastic Health: ", resp);
+})
 
 const MOCK_TIMEOUT = 1000;
 
@@ -463,31 +468,78 @@ class EsbRuntime {
     this.id = casual.uuid;
   }
 
-  distribution({daysBefore, servicesIds}) {
+  distribution({daysBefore, servicesIds}: {daysBefore: number, servicesIds: ?number[]}) {
     let _servicesIds: ?number[] = servicesIds;
     let _daysBefore: number = daysBefore;
 
     return new Series(_daysBefore, _servicesIds);
   }
 
-  totalCalls({before}) {
+  totalCalls({before} : {before : number}) {
 
     let summaries = [];
-    //if( isMockMode() ) {
+    let gte = `now-${before}d/d`;
 
-      for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(date, casual.integer(10000,30000)));
+    let promise = elasticClient.search({
+      index: 'esb',
+      type: 'runtime',
+      sort: 'ref_date:desc',
+       "_source": ["ref_date", "calls"],
+      body: {
+        query: {
+          "range" : {
+            "ref_date": {
+              "gte": gte,
+              "lt": "now+1d/d"
+            }
+          }
+        }
       }
-    // } else {
-    //
-    // }
 
-    return summaries;
+    });
+
+    return promise.then( response => {
+
+      response.hits.hits.forEach((hit) => {
+        summaries.push(new Summary(hit._source.ref_date, hit._source.calls));
+      });
+
+      return summaries;
+    })
+
+    // return new Promise( (resolve, reject) => {
+    //   setTimeout( () => {
+    //
+    //     var summaries = [];
+    //
+    //     for(let i = 0; i <= before; i++) {
+    //       //let date = moment().add(-i, 'days').format('DD/MM/YYYY');
+    //       let date = new Date();
+    //       date.setDate(date.getDate() - i);
+    //       summaries.push(new Summary(date, casual.integer(10000,30000)));
+    //     }
+    //
+    //     resolve(summaries);
+    //   }, MOCK_TIMEOUT);
+    // });
+
+    // return promise.then( res => {
+    //   return res;
+    // })
+
+    // let summaries = [];
+    //
+    // for(let i = 0; i <= before; i++) {
+    //   //let date = moment().add(-i, 'days').format('DD/MM/YYYY');
+    //   let date = new Date();
+    //   date.setDate(date.getDate() - i);
+    //   summaries.push(new Summary(date, casual.integer(10000,30000)));
+    // }
+    //
+    // return summaries;
   }
 
-  latency({before}) {
+  latency({before}: {before : number}) {
 
     let summaries = [];
 
@@ -504,7 +556,7 @@ class EsbRuntime {
     return summaries;
   }
 
-  errors({before}) {
+  errors({before}: {before: number}) {
 
     let summaries = [];
 
