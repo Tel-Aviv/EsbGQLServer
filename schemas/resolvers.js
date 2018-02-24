@@ -480,7 +480,7 @@ class EsbRuntime {
     let summaries = [];
     let gte = `now-${before}d/d`;
 
-    let promise = elasticClient.search({
+    return elasticClient.search({
       index: 'esb',
       type: 'runtime',
       sort: 'ref_date:desc',
@@ -496,9 +496,7 @@ class EsbRuntime {
         }
       }
 
-    });
-
-    return promise.then( response => {
+    }).then( response => {
 
       response.hits.hits.forEach((hit) => {
         summaries.push(new Summary(hit._source.ref_date, hit._source.calls));
@@ -506,26 +504,6 @@ class EsbRuntime {
 
       return summaries;
     })
-
-    // return new Promise( (resolve, reject) => {
-    //   setTimeout( () => {
-    //
-    //     var summaries = [];
-    //
-    //     for(let i = 0; i <= before; i++) {
-    //       //let date = moment().add(-i, 'days').format('DD/MM/YYYY');
-    //       let date = new Date();
-    //       date.setDate(date.getDate() - i);
-    //       summaries.push(new Summary(date, casual.integer(10000,30000)));
-    //     }
-    //
-    //     resolve(summaries);
-    //   }, MOCK_TIMEOUT);
-    // });
-
-    // return promise.then( res => {
-    //   return res;
-    // })
 
     // let summaries = [];
     //
@@ -542,35 +520,65 @@ class EsbRuntime {
   latency({before}: {before : number}) {
 
     let summaries = [];
+    let gte = `now-${before}d/d`;
 
-    //if( isMockMode() ) {
-      for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(new Date(), casual.integer(10, 30)));
+    return elasticClient.search({
+      index: 'esb',
+      type: 'runtime',
+      sort: 'ref_date:desc',
+       "_source": ["ref_date", "latency"],
+      body: {
+        query: {
+          "range" : {
+            "ref_date": {
+              "gte": gte,
+              "lt": "now+1d/d"
+            }
+          }
+        }
       }
-    // } else {
-    //
-    // }
 
-    return summaries;
+    }).then( response => {
+
+      response.hits.hits.forEach((hit) => {
+        summaries.push(new Summary(hit._source.ref_date, hit._source.latency));
+      });
+
+      return summaries;
+    })
+
   }
 
   errors({before}: {before: number}) {
 
     let summaries = [];
+    let gte = `now-${before}d/d`;
 
-    //if( isMockMode() ) {
-      for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(new Date(), casual.integer(0, 10)));
+    return elasticClient.search({
+      index: 'esb',
+      type: 'runtime',
+      sort: 'ref_date:desc',
+       "_source": ["ref_date", "errors"],
+      body: {
+        query: {
+          "range" : {
+            "ref_date": {
+              "gte": gte,
+              "lt": "now+1d/d"
+            }
+          }
+        }
       }
-    // } else {
-    //
-    // }
 
-    return summaries;
+    }).then( response => {
+
+      response.hits.hits.forEach((hit) => {
+        summaries.push(new Summary(hit._source.ref_date, hit._source.errors));
+      });
+
+      return summaries;
+    })
+
   }
 
 }
