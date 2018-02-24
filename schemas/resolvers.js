@@ -505,16 +505,6 @@ class EsbRuntime {
       return summaries;
     })
 
-    // let summaries = [];
-    //
-    // for(let i = 0; i <= before; i++) {
-    //   //let date = moment().add(-i, 'days').format('DD/MM/YYYY');
-    //   let date = new Date();
-    //   date.setDate(date.getDate() - i);
-    //   summaries.push(new Summary(date, casual.integer(10000,30000)));
-    // }
-    //
-    // return summaries;
   }
 
   latency({before}: {before : number}) {
