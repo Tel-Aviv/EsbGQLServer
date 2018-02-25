@@ -478,60 +478,84 @@ class EsbRuntime {
   totalCalls({before} : {before : number}) {
 
     let summaries = [];
-    let gte = `now-${before}d/d`;
+    let from = `now-${before}d/d`;
 
     return elasticClient.search({
       index: 'esb',
       type: 'runtime',
-      sort: 'ref_date:desc',
-       "_source": ["ref_date", "calls"],
+      _source: ["trace_Date", "message_guid"],
+      "size": 0, // omit hits from putput
       body: {
-        query: {
+        "query": {
           "range" : {
-            "ref_date": {
-              "gte": gte,
+            "trace_Date": {
+              "gte": from,
               "lt": "now+1d/d"
             }
           }
+        },
+        "aggs" : {
+          "histogram" : {
+              "date_histogram" : {
+                  "field" : "trace_Date",
+                  "interval" : "day",
+                  "format" : "yyyy-MM-dd",
+                   "order" : { "_key": "desc" }
+              }
+          }
         }
       }
-
     }).then( response => {
 
-      response.hits.hits.forEach((hit) => {
-        summaries.push(new Summary(hit._source.ref_date, hit._source.calls));
+      response.aggregations.histogram.buckets.forEach( bucket => {
+        let date = moment(bucket.key_as_string).format('DD-MM-YYYY');
+        summaries.push(new Summary(date,
+                                   bucket.doc_count));
       });
 
       return summaries;
     })
-
   }
 
   latency({before}: {before : number}) {
 
     let summaries = [];
-    let gte = `now-${before}d/d`;
+    let from = `now-${before}h/h`;
 
     return elasticClient.search({
       index: 'esb',
       type: 'runtime',
-      sort: 'ref_date:desc',
-       "_source": ["ref_date", "latency"],
+      _source: ["started", "storyId"],
+      "size": 0, // omit hits from putput
       body: {
-        query: {
+
+        "query": {
           "range" : {
-            "ref_date": {
-              "gte": gte,
+            "trace_Date": {
+              "gte": from,
               "lt": "now+1d/d"
             }
           }
-        }
+        },
+
+        "aggs" : {
+            "latency" : {
+                "date_histogram" : {
+                    "field" : "trace_Date",
+                    "interval" : "1h",
+                    "format" : "yyyy-MM-dd HH:ss",
+                     "order" : { "_key": "desc" }
+                }
+            }
+          }
+
       }
 
     }).then( response => {
 
-      response.hits.hits.forEach((hit) => {
-        summaries.push(new Summary(hit._source.ref_date, hit._source.latency));
+      response.aggregations.latency.buckets.forEach( bucket => {
+        let date = moment(bucket.key_as_string);
+        summaries.push(new Summary(date, bucket.doc_count));
       });
 
       return summaries;
@@ -542,28 +566,47 @@ class EsbRuntime {
   errors({before}: {before: number}) {
 
     let summaries = [];
-    let gte = `now-${before}d/d`;
+    let from = `now-${before}d/d`;
 
     return elasticClient.search({
       index: 'esb',
       type: 'runtime',
-      sort: 'ref_date:desc',
-       "_source": ["ref_date", "errors"],
+      "size": 0, // omit hits from putput
+       "_source": ["trace_Date", "status"],
       body: {
-        query: {
+
+        "query": {
           "range" : {
-            "ref_date": {
-              "gte": gte,
+            "trace_Date": {
+              "gte": from,
               "lt": "now+1d/d"
             }
           }
-        }
+        },
+
+        "aggs" : {
+              "errors" : {
+                  "filter" : { "match": { "status": "ERROR" } },
+                  "aggs" : {
+                      "histogram" : {
+                        "date_histogram" : {
+                            "field" : "trace_Date",
+                            "interval" : "day",
+                            "format" :  "yyyy-MM-dd",
+                             "order" : { "_key": "desc" }
+                        }
+                      }
+                  }
+              }
+          }
+
       }
 
     }).then( response => {
 
-      response.hits.hits.forEach((hit) => {
-        summaries.push(new Summary(hit._source.ref_date, hit._source.errors));
+      response.aggregations.errors.histogram.buckets.forEach( bucket => {
+        let date = moment(bucket.key_as_string).format('DD-MM-YYYY');;
+        summaries.push(new Summary(date, bucket.doc_count));
       });
 
       return summaries;
