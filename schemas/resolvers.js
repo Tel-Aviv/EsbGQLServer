@@ -11,6 +11,7 @@ import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
 import Kafka from 'no-kafka';
 import elasticsearch from 'elasticsearch';
+import elsb from 'elastic-builder';
 
 import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
@@ -57,6 +58,8 @@ const esHost = isMockMode() ? 'localhost' : '10.1.70.47';
 var elasticClient = new elasticsearch.Client({
   host: `${esHost}:9200`
   //log: 'trace'
+  // selector: function (hosts) {
+  // }
 });
 
 elasticClient.cluster.health({}, function(err, resp, status) {
@@ -430,34 +433,26 @@ class Summary {
 }
 
 class Serie {
-  constructor(name: string, daysBefore: number, serviceId: number) {
+  constructor(name: string,
+              data: number[],
+              serviceId: number) {
     this.id = casual.uuid;
     this.label = name;
-    this.data = casual.array_of_digits(daysBefore);
+    this.data = data;
     this.serviceId = serviceId;
   }
 
 }
 
 class Series {
-  constructor(daysBefore: number,
-              servicesIds: number[]) {
+
+  constructor(labels: string[],
+              series: Serie[]) {
+
     this.id = casual.uuid;
-
-    let labels = []
-    for(let i = 0; i < daysBefore; i++) {
-      let date = new Date();
-      date.setDate(date.getDate() - i);
-      labels.push(moment(date).format('DD/MM/YYYY'));
-    }
-
     this.labels = labels;
+    this.series = series;
 
-    this.series = [];
-    for(let i = 0; i < servicesIds.length; i++) {
-      let service = EsbAPI.getService(servicesIds[i]);
-      this.series.push(new Serie(service.name, daysBefore, service.objectId));
-    }
   }
 
 }
@@ -468,11 +463,70 @@ class EsbRuntime {
     this.id = casual.uuid;
   }
 
-  distribution({daysBefore, servicesIds}: {daysBefore: number, servicesIds: ?number[]}) {
-    let _servicesIds: ?number[] = servicesIds;
+  distribution({daysBefore, servicesIds}: {daysBefore: number, servicesIds: number[]}) {
+    let _servicesIds: number[] = servicesIds;
     let _daysBefore: number = daysBefore;
 
-    return new Series(_daysBefore, _servicesIds);
+    let from = `now-${_daysBefore}d/d`;
+
+    let labels = [];
+
+    // Use https://elastic-builder.js.org/
+    // to interactively translate JS to JSON query body
+    let histogramAgg = elsb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
+                           .order('_key', "desc");
+    servicesIds.map( serviceId => {
+        histogramAgg.agg(elsb.filterAggregation(serviceId.toString(),
+                            elsb.termQuery('service_id', serviceId))
+                        )
+    });
+
+    const requestBody = elsb.requestBodySearch()
+    .query(
+      elsb.boolQuery()
+        .must(elsb.rangeQuery('trace_Date')
+                    .gte(from)
+                    .lte('now+1d/d')
+        )
+        .filter(elsb.termsQuery('service_id', _servicesIds))
+    )
+    .agg(
+      histogramAgg
+    );
+
+    elasticClient.search({
+      index: 'esb',
+      type: 'runtime',
+      body: requestBody.toJSON()
+    }).then( response => {
+
+      response.aggregations.distribution.buckets.forEach( bucket => {
+        let date = moment(bucket.key_as_string).format('DD/MM/YYYY');
+        labels.push(date);
+
+      });
+
+    });
+
+    let _labels: string[] = []
+    for(let i = 0; i < daysBefore; i++) {
+      let date = new Date();
+      date.setDate(date.getDate() - i);
+      _labels.push(moment(date).format('DD/MM/YYYY'));
+    }
+
+    let data: number[] = casual.array_of_digits(daysBefore);
+    let series: Serie[] = [];
+    for(let i = 0; i < servicesIds.length; i++) {
+
+      let service = EsbAPI.getService(servicesIds[i]);
+      series.push(new Serie(service.name,
+                            data,
+                            service.objectId));
+    }
+
+    return new Series(_labels, series);
+
   }
 
   totalCalls({before} : {before : number}) {
@@ -480,40 +534,34 @@ class EsbRuntime {
     let summaries = [];
     let from = `now-${before}d/d`;
 
+    // Use https://elastic-builder.js.org/
+    // to interactively translate JS to JSON query body
+    const requestBody = elsb.requestBodySearch()
+    .query(
+      elsb.rangeQuery('trace_Date')
+            .gte(from)
+            .lte('now+1d/d')
+    )
+    .agg(
+        elsb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
+        .order('_key', "desc")
+    );
+
     return elasticClient.search({
-      index: 'esb',
-      type: 'runtime',
-      _source: ["trace_Date", "message_guid"],
-      "size": 0, // omit hits from putput
-      body: {
-        "query": {
-          "range" : {
-            "trace_Date": {
-              "gte": from,
-              "lt": "now+1d/d"
-            }
-          }
-        },
-        "aggs" : {
-          "histogram" : {
-              "date_histogram" : {
-                  "field" : "trace_Date",
-                  "interval" : "day",
-                  "format" : "yyyy-MM-dd",
-                   "order" : { "_key": "desc" }
-              }
-          }
-        }
-      }
+        index: 'esb',
+        type: 'runtime',
+        _source: ["trace_Date", "message_guid"],
+        "size": 0, // omit hits from putput
+        body: requestBody.toJSON()
     }).then( response => {
 
-      response.aggregations.histogram.buckets.forEach( bucket => {
-        let date = moment(bucket.key_as_string).format('DD-MM-YYYY');
-        summaries.push(new Summary(date,
-                                   bucket.doc_count));
-      });
+        response.aggregations.histogram.buckets.forEach( bucket => {
+          let date = moment(bucket.key_as_string).format('DD-MM-YYYY');
+          summaries.push(new Summary(date,
+                                     bucket.doc_count));
+        });
 
-      return summaries;
+        return summaries;
     })
   }
 
@@ -522,35 +570,25 @@ class EsbRuntime {
     let summaries = [];
     let from = `now-${before}h/h`;
 
+    // Use https://elastic-builder.js.org/
+    // to interactively translate JS to JSON query body
+    const requestBody = elsb.requestBodySearch()
+    .query(
+      elsb.rangeQuery('trace_Date')
+            .gte(from)
+            .lte('now/h')
+    )
+    .agg(
+        elsb.dateHistogramAggregation('latency', 'trace_Date', '1h')
+        .order('_key', "desc")
+    );
+
     return elasticClient.search({
       index: 'esb',
       type: 'runtime',
       _source: ["started", "storyId"],
       "size": 0, // omit hits from putput
-      body: {
-
-        "query": {
-          "range" : {
-            "trace_Date": {
-              "gte": from,
-              "lt": "now+1d/d"
-            }
-          }
-        },
-
-        "aggs" : {
-            "latency" : {
-                "date_histogram" : {
-                    "field" : "trace_Date",
-                    "interval" : "1h",
-                    "format" : "yyyy-MM-dd HH:ss",
-                     "order" : { "_key": "desc" }
-                }
-            }
-          }
-
-      }
-
+      body: requestBody.toJSON()
     }).then( response => {
 
       response.aggregations.latency.buckets.forEach( bucket => {
@@ -568,48 +606,34 @@ class EsbRuntime {
     let summaries = [];
     let from = `now-${before}d/d`;
 
-    return elasticClient.search({
-      index: 'esb',
-      type: 'runtime',
-      "size": 0, // omit hits from putput
-       "_source": ["trace_Date", "status"],
-      body: {
+    // Use https://elastic-builder.js.org/
+    // to interactively translate JS to JSON query body
+    const requestBody = elsb.requestBodySearch()
+      .query(
+        elsb.boolQuery()
+          .must(elsb.rangeQuery('trace_Date')
+                      .gte(from)
+                      .lte('now+1d/d')
+          )
+          .filter(elsb.termsQuery('status', 'ERROR'))
+      )
+      .agg(
+        elsb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
+      );
 
-        "query": {
-          "range" : {
-            "trace_Date": {
-              "gte": from,
-              "lt": "now+1d/d"
-            }
-          }
-        },
+      return elasticClient.search({
+          type: 'runtime',
+          "size": 0, // omit hits from putput
+           "_source": ["trace_Date", "status"],
+          body: requestBody.toJSON()
+      }).then( response => {
 
-        "aggs" : {
-              "errors" : {
-                  "filter" : { "match": { "status": "ERROR" } },
-                  "aggs" : {
-                      "histogram" : {
-                        "date_histogram" : {
-                            "field" : "trace_Date",
-                            "interval" : "day",
-                            "format" :  "yyyy-MM-dd",
-                             "order" : { "_key": "desc" }
-                        }
-                      }
-                  }
-              }
-          }
+        response.aggregations.histogram.buckets.forEach( bucket => {
+          let date = moment(bucket.key_as_string).format('DD-MM-YYYY');;
+          summaries.push(new Summary(date, bucket.doc_count));
+        });
 
-      }
-
-    }).then( response => {
-
-      response.aggregations.errors.histogram.buckets.forEach( bucket => {
-        let date = moment(bucket.key_as_string).format('DD-MM-YYYY');;
-        summaries.push(new Summary(date, bucket.doc_count));
-      });
-
-      return summaries;
+        return summaries;
     })
 
   }
