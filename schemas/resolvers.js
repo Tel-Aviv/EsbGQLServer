@@ -467,8 +467,10 @@ class EsbRuntime {
     let _servicesIds: number[] = servicesIds;
     let _daysBefore: number = daysBefore;
 
+    let from = `now-${_daysBefore}d/d`;
+    let labels = [];
 
-    elasticClient.search({
+    return elasticClient.search({
       index: 'esb',
       type: 'runtime',
       "size": 2,
@@ -476,96 +478,101 @@ class EsbRuntime {
         "query" : {"terms" : { "service_id" :  servicesIds } }
       }
     }).then( resp => {
-        let serviceName = resp.hits.hits[0]._source.service_name;
-        console.log(serviceName);
-    });
 
-    let from = `now-${_daysBefore}d/d`;
+        let serviceNames = [];
 
-    let labels = [];
+        resp.hits.hits.map( hit => {
+          console.log(hit._source.service_name);
+          serviceNames.push({
+              id: hit._source.service_id,
+              name: hit._source.service_name
+          });
+        })
 
-    // Use https://elastic-builder.js.org/
-    // to interactively translate JS to JSON query body
-    let histogramAgg = elsb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
-                           .order('_key', "desc");
-    servicesIds.map( serviceId => {
-        histogramAgg.agg(elsb.filterAggregation(serviceId.toString(),
-                            elsb.termQuery('service_id', serviceId))
-                        )
-    });
+        // let _labels: string[] = []
+        // for(let i = 0; i < daysBefore; i++) {
+        //   let date = new Date();
+        //   date.setDate(date.getDate() - i);
+        //   _labels.push(moment(date).format('DD/MM/YYYY'));
+        // }
+        //
+        // let data: number[] = casual.array_of_digits(daysBefore);
+        // let _series: Serie[] = [];
+        // for(let i = 0; i < servicesIds.length; i++) {
+        //
+        //   let service = EsbAPI.getService(servicesIds[i]);
+        //   _series.push(new Serie(service.name,
+        //                         data,
+        //                         service.objectId));
+        // }
+        //
+        // return new Series(_labels, _series);
 
-    const requestBody = elsb.requestBodySearch()
-    .query(
-      elsb.boolQuery()
-        .must(elsb.rangeQuery('trace_Date')
-                    .gte(from)
-                    .lte('now+1d/d')
-        )
-        .filter(elsb.termsQuery('service_id', _servicesIds))
-    )
-    .agg(
-      histogramAgg
-    );
-
-    console.time('Distribution query');
-    return elasticClient.search({
-      index: 'esb',
-      type: 'runtime',
-      "size": 0, // omit hits from putput
-      body: requestBody.toJSON()
-    }).then( response => {
-
-      console.timeEnd('Distribution query');
-
-      response.aggregations.distribution.buckets.forEach( (bucket,index) => {
-
-        let date = moment(bucket.key_as_string).format('DD/MM/YYYY');
-        labels.push(date);
-      });
-
-      let series: Serie[] = [];
-
-      for(let i = 0; i < servicesIds.length; i++) {
-
-        let data: number[] = [];
-
-        console.group('service ' + servicesIds[i]);
-
-        response.aggregations.distribution.buckets.forEach( bucket => {
-          data.push(bucket[servicesIds[i]].doc_count);
-          console.log(bucket[servicesIds[i]].doc_count);
+        // Use https://elastic-builder.js.org/
+        // to interactively translate JS to JSON query body
+        let histogramAgg = elsb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
+                               .order('_key', "desc");
+        servicesIds.map( serviceId => {
+            histogramAgg.agg(elsb.filterAggregation(serviceId.toString(),
+                                elsb.termQuery('service_id', serviceId))
+                            )
         });
 
-        console.groupEnd();
+        const requestBody = elsb.requestBodySearch()
+        .query(
+          elsb.boolQuery()
+            .must(elsb.rangeQuery('trace_Date')
+                        .gte(from)
+                        .lte('now+1d/d')
+            )
+            .filter(elsb.termsQuery('service_id', _servicesIds))
+        )
+        .agg(
+          histogramAgg
+        );
 
-        series.push(new Serie('ssss', //serviceName,
-                              data,
-                              servicesIds[i]));
-      }
+        console.time('Distribution query');
+        return elasticClient.search({
+          index: 'esb',
+          type: 'runtime',
+          "size": 0, // omit hits from putput
+          body: requestBody.toJSON()
+        }).then( response => {
 
-      return new Series(labels, series);
+          console.timeEnd('Distribution query');
 
+          response.aggregations.distribution.buckets.forEach( (bucket,index) => {
+
+            let date = moment(bucket.key_as_string).format('DD/MM/YYYY');
+            labels.push(date);
+          });
+
+          let series: Serie[] = [];
+
+          for(let i = 0; i < servicesIds.length; i++) {
+
+            let data: number[] = [];
+
+            console.group('service ' + servicesIds[i]);
+
+            response.aggregations.distribution.buckets.forEach( bucket => {
+              data.push(bucket[servicesIds[i]].doc_count);
+              console.log(bucket[servicesIds[i]].doc_count);
+            });
+
+            console.groupEnd();
+
+            let serviceName = serviceNames.find( s => s.id == servicesIds[i]);
+
+            series.push(new Serie(serviceName.name,
+                                  data,
+                                  servicesIds[i]));
+          }
+
+          return new Series(labels, series);
+
+        });
     });
-
-    // let _labels: string[] = []
-    // for(let i = 0; i < daysBefore; i++) {
-    //   let date = new Date();
-    //   date.setDate(date.getDate() - i);
-    //   _labels.push(moment(date).format('DD/MM/YYYY'));
-    // }
-    //
-    // let data: number[] = casual.array_of_digits(daysBefore);
-    // let _series: Serie[] = [];
-    // for(let i = 0; i < servicesIds.length; i++) {
-    //
-    //   let service = EsbAPI.getService(servicesIds[i]);
-    //   _series.push(new Serie(service.name,
-    //                         data,
-    //                         service.objectId));
-    // }
-    //
-    // return new Series(_labels, _series);
-
   }
 
   totalCalls({before} : {before : number}) {
