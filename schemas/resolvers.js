@@ -11,7 +11,7 @@ import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
 import Kafka from 'no-kafka';
 import elasticsearch from 'elasticsearch';
-import elsb from 'elastic-builder';
+import esb from 'elastic-builder';
 
 import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
@@ -470,24 +470,14 @@ class EsbRuntime {
     let from = `now-${_daysBefore}d/d`;
     let labels = [];
 
-    return elasticClient.search({
-      index: 'esb',
-      type: 'runtime',
-      "size": 2,
-      body: {
-        "query" : {"terms" : { "service_id" :  servicesIds } }
-      }
-    }).then( resp => {
-
-        let serviceNames = [];
-
-        resp.hits.hits.map( hit => {
-          console.log(hit._source.service_name);
-          serviceNames.push({
-              id: hit._source.service_id,
-              name: hit._source.service_name
-          });
-        })
+    // return elasticClient.search({
+    //   index: 'esb_ppr',
+    //   type: 'correlate_msg',
+    //   "size": 2,
+    //   body: {
+    //     "query" : {"terms" : { "service_id" :  servicesIds } }
+    //   }
+    // }).then( resp => {
 
         // let _labels: string[] = []
         // for(let i = 0; i < daysBefore; i++) {
@@ -510,31 +500,34 @@ class EsbRuntime {
 
         // Use https://elastic-builder.js.org/
         // to interactively translate JS to JSON query body
-        let histogramAgg = elsb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
-                               .order('_key', "desc");
+        let histogramAgg = esb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
+                                .order('_key', "desc");
         servicesIds.map( serviceId => {
-            histogramAgg.agg(elsb.filterAggregation(serviceId.toString(),
-                                elsb.termQuery('service_id', serviceId))
-                            )
+            histogramAgg.agg(
+                esb.filterAggregation(serviceId.toString(), esb.termQuery('service_id', serviceId) )
+                .agg(
+                    esb.termsAggregation('serviceName', "service_name")
+                )
+            )
         });
 
-        const requestBody = elsb.requestBodySearch()
+        let requestBody = esb.requestBodySearch()
         .query(
-          elsb.boolQuery()
-            .must(elsb.rangeQuery('trace_Date')
+            esb.boolQuery()
+            .must(esb.rangeQuery('trace_Date')
                         .gte(from)
                         .lte('now+1d/d')
             )
-            .filter(elsb.termsQuery('service_id', _servicesIds))
+            .filter(esb.termsQuery('service_id', servicesIds))
         )
         .agg(
-          histogramAgg
+            histogramAgg
         );
 
         console.time('Distribution query');
         return elasticClient.search({
-          index: 'esb',
-          type: 'runtime',
+          index: 'esb_ppr',
+          type: 'correlate_msg',
           "size": 0, // omit hits from putput
           body: requestBody.toJSON()
         }).then( response => {
@@ -555,16 +548,18 @@ class EsbRuntime {
 
             console.group('service ' + servicesIds[i]);
 
-            response.aggregations.distribution.buckets.forEach( bucket => {
+            let serviceName = '';
+            response.aggregations.distribution.buckets.forEach( (bucket, index) => {
               data.push(bucket[servicesIds[i]].doc_count);
               console.log(bucket[servicesIds[i]].doc_count);
+              if( index == 0 ) {
+                serviceName = bucket[servicesIds[i]].serviceName.buckets[0].key;
+              }
             });
 
             console.groupEnd();
 
-            let serviceName = serviceNames.find( s => s.id == servicesIds[i]);
-
-            series.push(new Serie(serviceName.name,
+            series.push(new Serie(serviceName,
                                   data,
                                   servicesIds[i]));
           }
@@ -572,7 +567,7 @@ class EsbRuntime {
           return new Series(labels, series);
 
         });
-    });
+    //});
   }
 
   totalCalls({before} : {before : number}) {
@@ -582,20 +577,20 @@ class EsbRuntime {
 
     // Use https://elastic-builder.js.org/
     // to interactively translate JS to JSON query body
-    const requestBody = elsb.requestBodySearch()
+    const requestBody = esb.requestBodySearch()
     .query(
-      elsb.rangeQuery('trace_Date')
+      esb.rangeQuery('trace_Date')
             .gte(from)
             .lte('now+1d/d')
     )
     .agg(
-        elsb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
+        esb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
         .order('_key', "desc")
     );
 
     return elasticClient.search({
-        index: 'esb',
-        type: 'runtime',
+        index: 'esb_ppr',
+        type: 'correlate_msg',
         _source: ["trace_Date", "message_guid"],
         "size": 0, // omit hits from putput
         body: requestBody.toJSON()
@@ -618,20 +613,20 @@ class EsbRuntime {
 
     // Use https://elastic-builder.js.org/
     // to interactively translate JS to JSON query body
-    const requestBody = elsb.requestBodySearch()
+    const requestBody = esb.requestBodySearch()
     .query(
-      elsb.rangeQuery('trace_Date')
+      esb.rangeQuery('trace_Date')
             .gte(from)
             .lte('now/h')
     )
     .agg(
-        elsb.dateHistogramAggregation('latency', 'trace_Date', '1h')
+        esb.dateHistogramAggregation('latency', 'trace_Date', '1h')
         .order('_key', "desc")
     );
 
     return elasticClient.search({
-      index: 'esb',
-      type: 'runtime',
+      index: 'esb_ppr',
+      type: 'correlate_msg',
       _source: ["started", "storyId"],
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
@@ -654,21 +649,22 @@ class EsbRuntime {
 
     // Use https://elastic-builder.js.org/
     // to interactively translate JS to JSON query body
-    const requestBody = elsb.requestBodySearch()
+    const requestBody = esb.requestBodySearch()
       .query(
-        elsb.boolQuery()
-          .must(elsb.rangeQuery('trace_Date')
+        esb.boolQuery()
+          .must(esb.rangeQuery('trace_Date')
                       .gte(from)
                       .lte('now+1d/d')
           )
-          .filter(elsb.termsQuery('status', 'ERROR'))
+          .filter(esb.termsQuery('status', 'ERROR'))
       )
       .agg(
-        elsb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
+        esb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
       );
 
       return elasticClient.search({
-          type: 'runtime',
+          index: 'esb_ppr',
+          type: 'correlate_msg',
           "size": 0, // omit hits from putput
            "_source": ["trace_Date", "status"],
           body: requestBody.toJSON()
