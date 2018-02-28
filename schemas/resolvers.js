@@ -553,7 +553,9 @@ class EsbRuntime {
               data.push(bucket[servicesIds[i]].doc_count);
               console.log(bucket[servicesIds[i]].doc_count);
               if( index == 0 ) {
-                serviceName = bucket[servicesIds[i]].serviceName.buckets[0].key;
+                if( bucket[servicesIds[i]].serviceName.buckets.length > 0 ) {
+                  serviceName = bucket[servicesIds[i]].serviceName.buckets[0].key;
+                }
               }
             });
 
