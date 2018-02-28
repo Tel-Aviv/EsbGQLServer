@@ -467,6 +467,19 @@ class EsbRuntime {
     let _servicesIds: number[] = servicesIds;
     let _daysBefore: number = daysBefore;
 
+
+    elasticClient.search({
+      index: 'esb',
+      type: 'runtime',
+      "size": 2,
+      body: {
+        "query" : {"terms" : { "service_id" :  servicesIds } }
+      }
+    }).then( resp => {
+        let serviceName = resp.hits.hits[0]._source.service_name;
+        console.log(serviceName);
+    });
+
     let from = `now-${_daysBefore}d/d`;
 
     let labels = [];
@@ -494,38 +507,64 @@ class EsbRuntime {
       histogramAgg
     );
 
-    elasticClient.search({
+    console.time('Distribution query');
+    return elasticClient.search({
       index: 'esb',
       type: 'runtime',
+      "size": 0, // omit hits from putput
       body: requestBody.toJSON()
     }).then( response => {
 
-      response.aggregations.distribution.buckets.forEach( bucket => {
+      console.timeEnd('Distribution query');
+
+      response.aggregations.distribution.buckets.forEach( (bucket,index) => {
+
         let date = moment(bucket.key_as_string).format('DD/MM/YYYY');
         labels.push(date);
-
       });
+
+      let series: Serie[] = [];
+
+      for(let i = 0; i < servicesIds.length; i++) {
+
+        let data: number[] = [];
+
+        console.group('service ' + servicesIds[i]);
+
+        response.aggregations.distribution.buckets.forEach( bucket => {
+          data.push(bucket[servicesIds[i]].doc_count);
+          console.log(bucket[servicesIds[i]].doc_count);
+        });
+
+        console.groupEnd();
+
+        series.push(new Serie('ssss', //serviceName,
+                              data,
+                              servicesIds[i]));
+      }
+
+      return new Series(labels, series);
 
     });
 
-    let _labels: string[] = []
-    for(let i = 0; i < daysBefore; i++) {
-      let date = new Date();
-      date.setDate(date.getDate() - i);
-      _labels.push(moment(date).format('DD/MM/YYYY'));
-    }
-
-    let data: number[] = casual.array_of_digits(daysBefore);
-    let series: Serie[] = [];
-    for(let i = 0; i < servicesIds.length; i++) {
-
-      let service = EsbAPI.getService(servicesIds[i]);
-      series.push(new Serie(service.name,
-                            data,
-                            service.objectId));
-    }
-
-    return new Series(_labels, series);
+    // let _labels: string[] = []
+    // for(let i = 0; i < daysBefore; i++) {
+    //   let date = new Date();
+    //   date.setDate(date.getDate() - i);
+    //   _labels.push(moment(date).format('DD/MM/YYYY'));
+    // }
+    //
+    // let data: number[] = casual.array_of_digits(daysBefore);
+    // let _series: Serie[] = [];
+    // for(let i = 0; i < servicesIds.length; i++) {
+    //
+    //   let service = EsbAPI.getService(servicesIds[i]);
+    //   _series.push(new Serie(service.name,
+    //                         data,
+    //                         service.objectId));
+    // }
+    //
+    // return new Series(_labels, _series);
 
   }
 
