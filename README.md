@@ -9,6 +9,7 @@
 3. Load sample data: <code>yarn load-sample-data</code> 
 or if you have access to MS SQLServer with real data: <code>yarn load-data</code>
 
+
 ### Then start GraphQL server
 <code>$ yarn debug</code> to start debugging with Chrome NIM
 
