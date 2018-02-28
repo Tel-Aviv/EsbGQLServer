@@ -4,7 +4,7 @@
 ## How to build/debug
 
 ### If you intending to work against Elasticsearch
-1. Start with creating <i>'esb_ppr'</i> index: <code>yarn create-index</code>
+1. Start with ensure you have <i>'esb_ppr'</i> index. If you don't have a such, run: <code>yarn create-index</code>, elsewhere you may want to delete the existing one: issue <code>DELETE /esb_ppr</code> to Elasticsearch host
 2. Put mappings to this index: <code>yarn put-mappings</code>
 3. Load sample data: <code>yarn load-sample-data</code> 
 or if you have access to MS SQLServer with real data: <code>yarn load-data</code>
