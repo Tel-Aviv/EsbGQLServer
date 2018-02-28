@@ -3,6 +3,8 @@
 
 ## How to build/debug
 
+### If you intending to work against Elasticsearch
+
 <code>$ yarn debug</code> to start debugging with Chrome NIM
 
 <code>$ yarn debug-mock</code> to debug with Chrome NIM using mocked services
