@@ -4,6 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+
+    "create-index": "babel-node ./elastic/create.js",
+    "put-mappings": "babel-node ./elastic/mappings.js",
+    "load-sample-data": "babel-node ./elastic/load_sample_data.js",
+
     "start": "babel-node server.js --exec babel-node --presets es2015",
     "debug": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk",
     "debug-mock": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk --mock",
@@ -28,6 +33,7 @@
     "babel-preset-react": "^6.24.1",
     "casual": "^1.5.19",
     "cors": "^2.8.4",
+    "elastic-builder": "^1.1.6",
     "elasticsearch": "^14.1.0",
     "express": "^4.16.2",
     "express-graphql": "^0.6.11",
@@ -37,6 +43,7 @@
     "graphql-server": "^0.3.2",
     "graphql-subscriptions": "^0.5.6",
     "graphql-tools": "^2.18.0",
+    "no-kafka": "^3.2.8",
     "nodemon": "^1.14.11",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
