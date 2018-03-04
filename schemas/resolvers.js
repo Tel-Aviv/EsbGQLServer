@@ -619,7 +619,7 @@ class EsbRuntime {
 
     if( isMockMode() ) {
       for(let i = 0; i <= before; i++) {
-        summaries.push(new Summary(moment().add(-i, 'days'), 
+        summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(10, 30)));
       }
 
@@ -712,6 +712,7 @@ class EsbRuntime {
 }
 
 class ServiceRequest {
+
   constructor(id: string,
               name: string,
               objectId: number,
@@ -942,8 +943,8 @@ export const resolvers = {
         subscribe: () => {
           console.log('Subscribed to traceAdded');
 
-          if( isMockMode() ) {
-            setInterval( () => {
+          if( isMockMode() && mockTraceTimerId == null ) {
+            mockTraceTimerId = setInterval( () => {
 
               let service = casual.random_element(mockServices);
               var statuses = ['INFO', 'WARNING', 'ERROR'];
@@ -960,11 +961,13 @@ export const resolvers = {
                                                          });
 
             }, 2000);
+          } else {
+              return pubsub.asyncIterator(TRACE_ADDED_TOPIC);
           }
-
-          return pubsub.asyncIterator(TRACE_ADDED_TOPIC);
         }
       }
 
     }
 }
+
+let mockTraceTimerId = null;
