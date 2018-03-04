@@ -467,117 +467,122 @@ class EsbRuntime {
   }
 
   distribution({daysBefore, servicesIds}: {daysBefore: number, servicesIds: number[]}) {
+
+    if( isMockMode() ) {
+
+      let labels = [];
+      for(let i = 0; i < daysBefore; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        labels.push(moment(date).format('DD/MM/YYYY'));
+      }
+
+      let series = [];
+      for(let i = 0; i < servicesIds.length; i++) {
+         let service = EsbAPI.getService(servicesIds[i]);
+         let data = casual.array_of_digits(daysBefore)
+         series.push(new Serie(service.name, data, service.objectId));
+      }
+
+      return new Series(labels, series);
+    }
+
     let _servicesIds: number[] = servicesIds;
     let _daysBefore: number = daysBefore;
 
     let from = `now-${_daysBefore}d/d`;
     let labels = [];
 
-    // return elasticClient.search({
-    //   index: 'esb_ppr',
-    //   type: 'correlate_msg',
-    //   "size": 2,
-    //   body: {
-    //     "query" : {"terms" : { "service_id" :  servicesIds } }
-    //   }
-    // }).then( resp => {
-
-        // let _labels: string[] = []
-        // for(let i = 0; i < daysBefore; i++) {
-        //   let date = new Date();
-        //   date.setDate(date.getDate() - i);
-        //   _labels.push(moment(date).format('DD/MM/YYYY'));
-        // }
-        //
-        // let data: number[] = casual.array_of_digits(daysBefore);
-        // let _series: Serie[] = [];
-        // for(let i = 0; i < servicesIds.length; i++) {
-        //
-        //   let service = EsbAPI.getService(servicesIds[i]);
-        //   _series.push(new Serie(service.name,
-        //                         data,
-        //                         service.objectId));
-        // }
-        //
-        // return new Series(_labels, _series);
-
-        // Use https://elastic-builder.js.org/
-        // to interactively translate JS to JSON query body
-        let histogramAgg = esb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
-                                .order('_key', "desc");
-        servicesIds.map( serviceId => {
-            histogramAgg.agg(
-                esb.filterAggregation(serviceId.toString(), esb.termQuery('service_id', serviceId) )
-                .agg(
-                    esb.termsAggregation('serviceName', "service_name")
-                )
+    // Use https://elastic-builder.js.org/
+    // to interactively translate JS to JSON query body
+    let histogramAgg = esb.dateHistogramAggregation('distribution', 'trace_Date', 'day')
+                            .order('_key', "desc");
+    servicesIds.map( serviceId => {
+        histogramAgg.agg(
+            esb.filterAggregation(serviceId.toString(), esb.termQuery('service_id', serviceId) )
+            .agg(
+                esb.termsAggregation('serviceName', "service_name")
             )
-        });
-
-        let requestBody = esb.requestBodySearch()
-        .query(
-            esb.boolQuery()
-            .must(esb.rangeQuery('trace_Date')
-                        .gte(from)
-                        .lte('now+1d/d')
-            )
-            .filter(esb.termsQuery('service_id', servicesIds))
         )
-        .agg(
-            histogramAgg
-        );
+    });
 
-        console.time('Distribution query');
-        return elasticClient.search({
-          index: 'esb_ppr',
-          type: 'correlate_msg',
-          "size": 0, // omit hits from putput
-          body: requestBody.toJSON()
-        }).then( response => {
+    let requestBody = esb.requestBodySearch()
+    .query(
+        esb.boolQuery()
+        .must(esb.rangeQuery('trace_Date')
+                    .gte(from)
+                    .lte('now+1d/d')
+        )
+        .filter(esb.termsQuery('service_id', servicesIds))
+    )
+    .agg(
+        histogramAgg
+    );
 
-          console.timeEnd('Distribution query');
+    console.time('Distribution query');
+    return elasticClient.search({
+      index: 'esb_ppr',
+      type: 'correlate_msg',
+      "size": 0, // omit hits from putput
+      body: requestBody.toJSON()
+    }).then( response => {
 
-          response.aggregations.distribution.buckets.forEach( (bucket,index) => {
+      console.timeEnd('Distribution query');
 
-            let date = moment(bucket.key_as_string).format('DD/MM/YYYY');
-            labels.push(date);
-          });
+      response.aggregations.distribution.buckets.forEach( (bucket,index) => {
 
-          let series: Serie[] = [];
+        let date = moment(bucket.key_as_string).format('DD/MM/YYYY');
+        labels.push(date);
+      });
 
-          for(let i = 0; i < servicesIds.length; i++) {
+      let series: Serie[] = [];
 
-            let data: number[] = [];
+      for(let i = 0; i < servicesIds.length; i++) {
 
-            console.group('service ' + servicesIds[i]);
+        let data: number[] = [];
 
-            let serviceName = '';
-            response.aggregations.distribution.buckets.forEach( (bucket, index) => {
-              data.push(bucket[servicesIds[i]].doc_count);
-              console.log(bucket[servicesIds[i]].doc_count);
-              if( index == 0 ) {
-                if( bucket[servicesIds[i]].serviceName.buckets.length > 0 ) {
-                  serviceName = bucket[servicesIds[i]].serviceName.buckets[0].key;
-                }
-              }
-            });
+        console.group('service ' + servicesIds[i]);
 
-            console.groupEnd();
-
-            series.push(new Serie(serviceName,
-                                  data,
-                                  servicesIds[i]));
+        let serviceName = '';
+        response.aggregations.distribution.buckets.forEach( (bucket, index) => {
+          data.push(bucket[servicesIds[i]].doc_count);
+          console.log(bucket[servicesIds[i]].doc_count);
+          if( index == 0 ) {
+            if( bucket[servicesIds[i]].serviceName.buckets.length > 0 ) {
+              serviceName = bucket[servicesIds[i]].serviceName.buckets[0].key;
+            }
           }
-
-          return new Series(labels, series);
-
         });
-    //});
+
+        console.groupEnd();
+
+        series.push(new Serie(serviceName,
+                              data,
+                              servicesIds[i]));
+      }
+
+      return new Series(labels, series);
+
+    });
+
   }
 
   totalCalls({before} : {before : number}) {
 
     let summaries = [];
+
+    if( isMockMode() ) {
+
+      for(let i = 0; i <= before; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(date, casual.integer(10000,30000)));
+      }
+
+      return summaries;
+
+    }
+
     let from = `now-${before}d/d`;
 
     // Use https://elastic-builder.js.org/
@@ -614,6 +619,18 @@ class EsbRuntime {
   latency({before}: {before : number}) {
 
     let summaries = [];
+
+    if( isMockMode() ) {
+      for(let i = 0; i <= before; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(new Date(), casual.integer(10, 30)));
+      }
+
+      return summaries;
+
+    }
+
     let from = `now-${before}h/h`;
 
     // Use https://elastic-builder.js.org/
@@ -650,6 +667,17 @@ class EsbRuntime {
   errors({before}: {before: number}) {
 
     let summaries = [];
+
+    if( isMockMode() ) {
+      for(let i = 0; i <= before; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(new Date(), casual.integer(0, 10)));
+      }
+
+      return summaries;
+    }
+
     let from = `now-${before}d/d`;
 
     // Use https://elastic-builder.js.org/
