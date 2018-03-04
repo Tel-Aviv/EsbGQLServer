@@ -478,7 +478,10 @@ class EsbRuntime {
       let series = [];
       for(let i = 0; i < servicesIds.length; i++) {
          let service = EsbAPI.getService(servicesIds[i]);
-         let data = casual.array_of_digits(daysBefore)
+         let data = [];
+         for(let j = 0; j < daysBefore; j++ ) {
+           data.push(casual.integer(10000,30000))
+         }
          series.push(new Serie(service.name, data, service.objectId));
       }
 
