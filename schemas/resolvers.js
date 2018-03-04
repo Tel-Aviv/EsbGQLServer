@@ -472,9 +472,7 @@ class EsbRuntime {
 
       let labels = [];
       for(let i = 0; i < daysBefore; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        labels.push(moment(date).format('DD/MM/YYYY'));
+        labels.push(moment().add(-i, 'days').format('DD/MM/YYYY'))
       }
 
       let series = [];
@@ -574,9 +572,8 @@ class EsbRuntime {
     if( isMockMode() ) {
 
       for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(date, casual.integer(10000,30000)));
+        summaries.push(new Summary(moment().add(-i, 'days'),
+                                   casual.integer(10000,30000)));
       }
 
       return summaries;
@@ -622,9 +619,8 @@ class EsbRuntime {
 
     if( isMockMode() ) {
       for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(new Date(), casual.integer(10, 30)));
+        summaries.push(new Summary(moment().add(-i, 'days'), 
+                                   casual.integer(10, 30)));
       }
 
       return summaries;
@@ -672,7 +668,7 @@ class EsbRuntime {
       for(let i = 0; i <= before; i++) {
         let date = new Date();
         date.setDate(date.getDate() - i);
-        summaries.push(new Summary(new Date(), casual.integer(0, 10)));
+        summaries.push(new Summary(date, casual.integer(0, 10)));
       }
 
       return summaries;
