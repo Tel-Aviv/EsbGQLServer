@@ -9,7 +9,10 @@ import { GraphQLError } from 'graphql/error';
 import mockServices from './MockServices';
 import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
-import Kafka from 'no-kafka';
+
+if( !isMockMode() )
+   var Kafka = require('no-kafka')
+
 import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
 
