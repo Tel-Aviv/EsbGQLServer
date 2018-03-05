@@ -471,7 +471,8 @@ class EsbRuntime {
     if( isMockMode() ) {
 
       let labels = [];
-      for(let i = 0; i < daysBefore; i++) {
+      for(let i = daysBefore == 0 ? 0 : 1;
+          i <= daysBefore; i++) {
         labels.push(moment().add(-i, 'days').format('DD/MM/YYYY'))
       }
 
@@ -479,7 +480,8 @@ class EsbRuntime {
       for(let i = 0; i < servicesIds.length; i++) {
          let service = EsbAPI.getService(servicesIds[i]);
          let data = [];
-         for(let j = 0; j < daysBefore; j++ ) {
+         for(let j = daysBefore == 0 ? 0 : 1;
+             j <= daysBefore; j++ ) {
            data.push(casual.integer(10000,30000))
          }
          series.push(new Serie(service.name, data, service.objectId));
