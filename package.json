@@ -6,7 +6,8 @@
   "scripts": {
 
     "create-index": "babel-node ./elastic/create.js",
-    "put-mappings": "babel-node ./elastic/mappings.js",
+    "put-mappings-correlated": "babel-node ./elastic/mappings_correlated.js",
+    "put-mappings-msg": "babel-node ./elastic/mappings_msg.js",
     "load-sample-data": "babel-node ./elastic/load_sample_data.js",
 
     "start": "babel-node server.js --exec babel-node --presets es2015",
