@@ -33,7 +33,7 @@ client.indices.putMapping({
       },
       'service_name': {
         'type': 'text',
-        "analyzer": "standard"
+        "analyzer": "partial_words_analyzer"
       },
       'environment': {
         'type': 'short'
@@ -42,7 +42,8 @@ client.indices.putMapping({
         'type': 'ip'
       },
       'client_user': {
-        'type': 'keyword'
+        "type": "text",
+        "analyzer": "partial_words_analyzer"
       }
 
     }
