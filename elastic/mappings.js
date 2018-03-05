@@ -25,13 +25,15 @@ client.indices.putMapping({
           'type': 'integer'
       },
       'status': {
-        'type': 'keyword'
+        'type': 'keyword',
+        "normalizer": "lowercase_normalizer"
       },
       'service_id': {
         'type': 'short'
       },
       'service_name': {
-        'type': 'keyword'
+        'type': 'text',
+        "analyzer": "standard"
       },
       'environment': {
         'type': 'short'
