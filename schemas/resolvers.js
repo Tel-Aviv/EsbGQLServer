@@ -574,7 +574,8 @@ class EsbRuntime {
 
     if( isMockMode() ) {
 
-      for(let i = 0; i <= before; i++) {
+      for(let i = before == 0 ? 0 : 1;
+          i <= before; i++) {
         summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(10000,30000)));
       }
@@ -668,10 +669,11 @@ class EsbRuntime {
     let summaries = [];
 
     if( isMockMode() ) {
-      for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(date, casual.integer(0, 10)));
+
+      for(let i = before == 0 ? 0 : 1; 
+          i <= before; i++) {
+        summaries.push(new Summary(moment().add(-i, 'days'),
+                                   casual.integer(0, 10)));
       }
 
       return summaries;
