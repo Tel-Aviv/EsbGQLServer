@@ -651,7 +651,7 @@ class EsbRuntime {
       index: 'esb_ppr',
       type: 'correlate_msg',
       _source: ["started", "storyId"],
-      "size": 0, // omit hits from putput
+      "size": 0, // omit hits from output
       body: requestBody.toJSON()
     }).then( response => {
 
