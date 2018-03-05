@@ -7,6 +7,19 @@ client.indices.create({
   body: {
     "settings": {
       "analysis": {
+        "analyzer" : {
+          "partial_words_analyzer" : {
+            "tokenizer" : "partial_words_tokenizer"
+          }
+        },
+        "tokenizer" : {
+          "partial_words_tokenizer" : {
+            "type": "edge_ngram",
+            "min_gram": 2,
+            "max_gram": 10,
+            "token_chars": ["letter", "digit"]
+          }
+        },
         "normalizer": {
           "lowercase_normalizer":{
             "type": "custom",
