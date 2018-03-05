@@ -33,4 +33,4 @@ client.indices.create({
   console.log("create: ",resp);
 }). catch( err => {
   console.log(err);
-})
+});
