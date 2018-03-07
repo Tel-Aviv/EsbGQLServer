@@ -2,15 +2,13 @@
 import client from './connection.js';
 
 client.indices.putMapping({
-  index: 'esb_ppr',
-  type: 'correlate_msg',
+  index: 'esb_ppr_summary',
+  type: 'summary',
   timeout: '10m',
   body: {
     "properties": {
       'trace_Date': {
-        'type': 'date',
-        //'format': 'basic_date_time'
-        'format': 'basic_date_time_no_millis'
+        'type': 'date',      
       },
       'message_guid': {
         'type': 'keyword'
@@ -45,7 +43,6 @@ client.indices.putMapping({
         "type": "text",
         "analyzer": "partial_words_analyzer"
       }
-
     }
   }
 },

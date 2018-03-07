@@ -2,7 +2,7 @@
 import client from './connection.js';
 
 client.indices.create({
-  index: 'esb_ppr',
+  index: 'esb_ppr_summary',
   timeout: '10m',
   body: {
     "settings": {

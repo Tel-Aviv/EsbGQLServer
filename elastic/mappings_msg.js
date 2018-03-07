@@ -3,8 +3,8 @@
 
  client.indices.putMapping({
 
-   index: 'esb_ppr',
-   type: 'msg',
+   index: 'esb_ppr_row',
+   type: 'track',
    timeout: '10m',
    body: {
           "properties": {
@@ -40,12 +40,10 @@
                  "type": "short"
                },
                "start_date": {
-                 "type": "date",
-                 "format": "basic_date_time_no_millis"
+                 "type": "date"              
                },
                "end_date": {
                  "type": "date",
-                 "format": "basic_date_time_no_millis"
                },
                "status": {
                  "type": "keyword",
