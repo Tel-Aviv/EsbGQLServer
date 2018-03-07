@@ -471,8 +471,7 @@ class EsbRuntime {
     if( isMockMode() ) {
 
       let labels = [];
-      for(let i = daysBefore == 0 ? 0 : 1;
-          i <= daysBefore; i++) {
+      for(let i = 0; i < daysBefore; i++) {
         labels.push(moment().add(-i, 'days').format('DD/MM/YYYY'))
       }
 
@@ -480,8 +479,7 @@ class EsbRuntime {
       for(let i = 0; i < servicesIds.length; i++) {
          let service = EsbAPI.getService(servicesIds[i]);
          let data = [];
-         for(let j = daysBefore == 0 ? 0 : 1;
-             j <= daysBefore; j++ ) {
+         for(let j = 0; j < daysBefore; j++ ) {
            data.push(casual.integer(10000,30000))
          }
          series.push(new Serie(service.name, data, service.objectId));
@@ -524,8 +522,8 @@ class EsbRuntime {
 
     console.time('Distribution query');
     return elasticClient.search({
-      index: 'esb_ppr',
-      type: 'correlate_msg',
+      index: 'esb_ppr_summary',
+      type: 'summary',
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
     }).then( response => {
@@ -576,8 +574,7 @@ class EsbRuntime {
 
     if( isMockMode() ) {
 
-      for(let i = before == 0 ? 0 : 1;
-          i <= before; i++) {
+      for(let i = 0; i <= before; i++) {
         summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(10000,30000)));
       }
@@ -602,8 +599,8 @@ class EsbRuntime {
     );
 
     return elasticClient.search({
-        index: 'esb_ppr',
-        type: 'correlate_msg',
+        index: 'esb_ppr_summary',
+        type: 'summary',
         _source: ["trace_Date", "message_guid"],
         "size": 0, // omit hits from putput
         body: requestBody.toJSON()
@@ -624,8 +621,7 @@ class EsbRuntime {
     let summaries = [];
 
     if( isMockMode() ) {
-      for(let i = before == 0 ? 0 : 1;
-          i <= before; i++) {
+      for(let i = 0; i <= before; i++) {
         summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(10, 30)));
       }
@@ -645,15 +641,15 @@ class EsbRuntime {
             .lte('now/h')
     )
     .agg(
-        esb.dateHistogramAggregation('latency', 'trace_Date', '1h')
+        esb.dateHistogramAggregation('latency', 'esb_Latency', '1h')
         .order('_key', "desc")
     );
 
     return elasticClient.search({
-      index: 'esb_ppr',
-      type: 'correlate_msg',
+      index: 'esb_ppr_summary',
+      type: 'summary',
       _source: ["started", "storyId"],
-      "size": 0, // omit hits from output
+      "size": 0, // omit hits from putput
       body: requestBody.toJSON()
     }).then( response => {
 
@@ -672,11 +668,10 @@ class EsbRuntime {
     let summaries = [];
 
     if( isMockMode() ) {
-
-      for(let i = before == 0 ? 0 : 1;
-          i <= before; i++) {
-        summaries.push(new Summary(moment().add(-i, 'days'),
-                                   casual.integer(0, 10)));
+      for(let i = 0; i <= before; i++) {
+        let date = new Date();
+        date.setDate(date.getDate() - i);
+        summaries.push(new Summary(date, casual.integer(0, 10)));
       }
 
       return summaries;
@@ -693,15 +688,15 @@ class EsbRuntime {
                       .gte(from)
                       .lte('now+1d/d')
           )
-          .filter(esb.termsQuery('status', 'ERROR'))
+          .filter(esb.termsQuery('status', 'Failure'))
       )
       .agg(
         esb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
       );
 
       return elasticClient.search({
-          index: 'esb_ppr',
-          type: 'correlate_msg',
+          index: 'esb_ppr_summary',
+          type: 'summary',
           "size": 0, // omit hits from putput
            "_source": ["trace_Date", "status"],
           body: requestBody.toJSON()
