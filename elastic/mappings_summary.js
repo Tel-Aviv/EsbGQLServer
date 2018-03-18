@@ -7,39 +7,39 @@ client.indices.putMapping({
   timeout: '10m',
   body: {
     "properties": {
-      'trace_Date': {
-        'type': 'date',
+      "trace_Date": {
+        "type": "date"
       },
-      'message_guid': {
-        'type': 'keyword'
+      "message_guid": {
+        "type": "keyword"
       },
-      'esb_Latency': {
-        'type': 'integer',
+      "esb_Latency": {
+        "type": "integer"
       },
-      'transport_Latency': {
-        'type': 'integer',
+      "transport_Latency": {
+        "type": "integer"
       },
-      'service_Latency': {
-          'type': 'integer'
+      "service_Latency": {
+          "type": "integer"
       },
-      'status': {
-        'type': 'keyword',
+      "status": {
+        "type": "keyword",
         "normalizer": "lowercase_normalizer"
       },
-      'service_id': {
-        'type': 'short'
+      "service_id": {
+        "type": "short"
       },
-      'service_name': {
-        'type': 'text',
+      "service_name": {
+        "type": "text",
         "analyzer": "partial_words_analyzer"
       },
-      'environment': {
-        'type': 'short'
+      "environment": {
+        "type": "short"
       },
-      'client_ip': {
-        'type': 'ip'
+      "client_ip": {
+        "type": "ip"
       },
-      'client_user': {
+      "client_user": {
         "type": "text",
         "analyzer": "partial_words_analyzer"
       }
