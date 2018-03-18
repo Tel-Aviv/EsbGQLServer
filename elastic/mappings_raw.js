@@ -43,7 +43,7 @@
                  "type": "date"
                },
                "end_date": {
-                 "type": "date",
+                 "type": "date"
                },
                "status": {
                  "type": "keyword",
