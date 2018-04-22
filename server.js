@@ -1,7 +1,11 @@
 import express from 'express';
 import bodyParser from 'body-parser';
-import graphqlHTTP from 'express-graphql';
-import { graphiqlExpress } from 'graphql-server';
+//import graphqlHTTP from 'express-graphql';
+//import { graphiqlExpress } from 'graphql-server';
+
+import { graphqlExpress, graphiqlExpress } from 'apollo-server-express';
+import { ApolloEngine } from 'apollo-engine';
+
 import { createServer } from 'http';
 import { execute, subscribe } from 'graphql';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
@@ -29,8 +33,10 @@ graphQLServer.use('*', cors({
 // parameter - named context
 graphQLServer.use('/graphql',
         bodyParser.json(),
-        graphqlHTTP({
+        graphqlExpress({
                       schema: schema,
+                      tracing: true,
+                      cacheControl: true,
                       graphiql: process.env.NODE_ENV === 'development'
                   })
 );
@@ -50,9 +56,27 @@ graphQLServer.use('/graphiql',
       })
 );
 
+const engine = new ApolloEngine({
+  apiKey: 'service:esb-gql:V40YMFJ2kg_lyUViH6NDuw',
+  logging: {
+    level: 'DEBUG'
+  }
+});
+
+engine.on('error', err => {
+  console.log('There was an error starting the Apollo server or Engine');
+  console.error(err);
+
+  process.exit(1);
+});
+
 const websocketServer = createServer(graphQLServer);
 
-websocketServer.listen(PORT, () => {
+engine.listen({
+      port: PORT,
+      //expressApp: graphQLServer,
+      httpServer: websocketServer,
+    }, () => {
     console.log(`Websocket Server is listening on: ${PORT}`);
 
     // Set up the WebSocket for handling GraphQL subscriptions
