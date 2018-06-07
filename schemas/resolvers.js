@@ -12,6 +12,7 @@ import mockCategories from './MockCategories';
 
 if( !isMockMode() )
    var Kafka = require('no-kafka')
+   //const GooglePubSub = require('@google-cloud/pubsub');
 
 import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
@@ -20,6 +21,10 @@ import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
 
 if( !isMockMode() ) {
+
+    // const googlePubSub = new GooglePubSub();
+    // const subscritionName = '';
+    // const subscription = googlePubSub.subscription(subscriptionName);
 
     var consumer = new Kafka.SimpleConsumer({
       connectionString: "10.1.70.101:9092",
@@ -32,10 +37,10 @@ if( !isMockMode() ) {
 
         const message = m.message.value.toString('utf-8');
         var trace = JSON.parse(message);
+
         let newTrace = new Trace(casual.uuid,
                                  trace.message_guid,
-                                 "ERROR",
-                                 trace.service_name,
+                                 trace.status,
                                  trace.service_id
                                );
 
@@ -48,7 +53,7 @@ if( !isMockMode() ) {
     }
 
     consumer.init().then( function() {
-      return consumer.subscribe('esbmsgs_ppr', 0,
+      return consumer.subscribe('eventlogagg', 0,
                                 dataHandler);
     })
 }
@@ -411,17 +416,16 @@ class Trace {
   constructor(id,
               storyId,
               status: string,
-              serviceName: string,
-              serviceId) {
+              serviceId: number) {
     this.id = id
     this.storyId = storyId;
     this.time = new Date();
-    this.message = 'Request received';
-    this.eventId = casual.integer(1, 1000);
+    this.serviceId = serviceId;
     this.status = status;
 
-    this.serviceName = serviceName;
-    this.serviceId = serviceId;
+    //this.start = start;
+    //this.end = end;
+    //this.latency = moment(end).diff(moment(start));
   }
 
 }
@@ -502,7 +506,7 @@ class EsbRuntime {
         histogramAgg.agg(
             esb.filterAggregation(serviceId.toString(), esb.termQuery('service_id', serviceId) )
             .agg(
-                esb.termsAggregation('serviceName', "service_name")
+                esb.termsAggregation('serviceName', "service_name.keyword")
             )
         )
     });
@@ -688,7 +692,7 @@ class EsbRuntime {
                       .gte(from)
                       .lte('now+1d/d')
           )
-          .filter(esb.termsQuery('status', 'Failure'))
+          .filter(esb.termsQuery('status', 'Error'))
       )
       .agg(
         esb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
@@ -702,10 +706,27 @@ class EsbRuntime {
           body: requestBody.toJSON()
       }).then( response => {
 
-        response.aggregations.histogram.buckets.forEach( bucket => {
-          let date = moment(bucket.key_as_string).format('DD-MM-YYYY');;
-          summaries.push(new Summary(date, bucket.doc_count));
-        });
+        const summaries = [];
+
+        let foundIndex = 0;
+        for(let i = 0; i <= before; i++) {
+          let bucket = response.aggregations.histogram.buckets[foundIndex];
+          let bucketDate = moment(bucket.key);
+
+          let _value = 0;
+
+          let date = new Date();
+          date.setDate(date.getDate() - i);
+          let _date = moment(date);
+
+          if( bucketDate.isSame( _date, 'day' ) ) {
+            _value = bucket.doc_count;
+            foundIndex++;
+          }
+
+          summaries.push( new Summary(_date.format('DD-MM-YYYY'), _value) );
+
+        }
 
         return summaries;
     })
@@ -950,7 +971,7 @@ export const resolvers = {
             mockTraceTimerId = setInterval( () => {
 
               let service = casual.random_element(mockServices);
-              var statuses = ['INFO', 'WARNING', 'ERROR'];
+              var statuses = ['Success', 'Warning', 'Failure'];
               let status = casual.random_element(statuses);
 
               const newTrace = new Trace(casual.uuid, //id
