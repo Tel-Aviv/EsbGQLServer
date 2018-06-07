@@ -141,10 +141,7 @@ type Trace {
 
   storyId: ID!
   time: Date!
-  serviceName: String!
   serviceId: Int!
-  message: String
-  eventId: Int
   status: String
 }
 
