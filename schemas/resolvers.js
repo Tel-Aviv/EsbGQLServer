@@ -272,37 +272,67 @@ class Repository {
                : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
                'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
 
+      let requestBody = esb.requestBodySearch()
+      .query(
+        esb.nestedQuery()
+        .path('service')
+        .query(
+            esb.matchAllQuery()
+        )
+      );
+
+      return elasticClient.search({
+        index: 'esb_ppr_repository',
+        body: requestBody.toJSON()
+      }).then( response => {
+
+        const totalRows = response.hits.total;
+
+        let services = response.hits.hits.map( hit => {
+          const _service = hit._source.service;
+          return {
+            id: 'svc' + casual.uuid, // service.ServiceId,
+            address: _service.url,
+            name: _service.name,
+            sla: _service.sla
+          }
+        })
+
+        return new SetInfo(totalRows, services);
+
+      });
+
       if( page )
           // 'http://esb01node01/ESBUddiApplication/api/Services'
           url = `http://m2055895-w7/ESBUddiApplication/api/Services?pageNum=${page}&pageSize=${pageSize}`;
 
-      return rp({
-        uri: url,
-        headers: {
-          'User-Agent': 'GraphQL'
-        },
-        json: true
-      }).then( ({list, totalRows}) => {
-
-        let services = list.map( (service) => (
-          {
-            id: 'svc' + service.ServiceId,
-            objectId: service.ServiceId,
-            name: service.Name,
-            categoryId: service.CategoryId,
-            description: service.Description,
-            address: service.Url,
-            pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
-            environment: ( service.Environment == 1 ) ? "Internal" : "External",
-            sla: service.ExpectedSla
-          }
-        ));
-
-        return new SetInfo(totalRows, services);
-
-      }).catch( (data) => {
-        return Promise.reject(data.error.message);
-      })
+      // return rp({
+      //   uri: url,
+      //   headers: {
+      //     'User-Agent': 'GraphQL'
+      //   },
+      //   json: true
+      // }).then( ({list, totalRows}) => {
+      //
+      //   let services = list.map( (service) => (
+      //     {
+      //       id: 'svc' + service.ServiceId,
+      //       objectId: service.ServiceId,
+      //       name: service.Name,
+      //       categoryId: service.CategoryId,
+      //       description: service.Description,
+      //       address: service.Url,
+      //       pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
+      //       environment: ( service.Environment == 1 ) ? "Internal" : "External",
+      //       sla: service.ExpectedSla
+      //     }
+      //   ));
+      //
+      //   return new SetInfo(totalRows, services);
+      //
+      // }).catch( (data) => {
+      //   return Promise.reject(data.error.message);
+      // })
 
     }
   }
