@@ -12,9 +12,9 @@ interface Node {
   id: ID!
 }
 
-type User implements Node {
-    id: ID!
-}
+#type User implements Node {
+#    id: ID!
+#}
 
 type Category implements Node {
   id: ID!
@@ -22,7 +22,6 @@ type Category implements Node {
   objectId: Int!
 
   name: String
-  description: String
   services: [Service]
 }
 
@@ -33,6 +32,7 @@ type Service implements Node {
     categoryId: Int
     name: String
     address: String!
+    soapAction: String,
     description: String
     sla: Int
     when_published: String #Date
@@ -62,11 +62,12 @@ type SetInfo implements Node {
 
 type Repository implements Node {
   id: ID!
+  service(Id: Int): Service
   services(categoryId: Int,
            page: Int,
-           pageSize: Int): SetInfo
-  categories: [Category]
-  serviceRequests: [ServiceRequest]
+           pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
+  categories: [Category]  @cacheControl(maxAge: 500)
+  serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
 }
 
 type Summary implements Node {
@@ -92,6 +93,7 @@ type Series implements Node {
 
 type Runtime implements Node {
   id: ID!
+
   totalCalls(before: Date): [Summary]
   latency(before: Date): [Summary] #in milliseconds
   errors(before: Date): [Summary]
@@ -101,14 +103,16 @@ type Runtime implements Node {
 
 type Query {
 
-    viewer: User
+    #viewer: User
 
     node(
       id: ID!
     ): Node
 
-    repository: Repository
+    repository: Repository @cacheControl(maxAge: 500)
     runtime: Runtime
+
+    traces: [Trace]
 }
 
 input ServiceInput {
@@ -141,7 +145,10 @@ type Trace {
 
   storyId: ID!
   time: Date!
+  serviceName: String!
   serviceId: Int!
+  message: String
+  eventId: Int
   status: String
 }
 
