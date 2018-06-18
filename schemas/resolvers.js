@@ -6,25 +6,20 @@ import casual from 'casual';
 import moment from 'moment';
 import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
-import mockServices from './MockServices';
-import mockServiceRequests from './MockServiceRequests';
-import mockCategories from './MockCategories';
 
-if( !isMockMode() )
-   var Kafka = require('no-kafka')
-   //const GooglePubSub = require('@google-cloud/pubsub');
-
-import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
 
 import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
 
-if( !isMockMode() ) {
+import EsbAPI from './EsbAPI';
 
-    // const googlePubSub = new GooglePubSub();
-    // const subscritionName = '';
-    // const subscription = googlePubSub.subscription(subscriptionName);
+if( ! EsbAPI.isMockMode() )
+   var Kafka = require('no-kafka')
+
+import elasticsearch from 'elasticsearch';
+
+if( !EsbAPI.isMockMode() ) {
 
     var consumer = new Kafka.SimpleConsumer({
       connectionString: "10.1.70.101:9092",
@@ -38,9 +33,28 @@ if( !isMockMode() ) {
         const message = m.message.value.toString('utf-8');
         var trace = JSON.parse(message);
 
+        // Map serviceId to metadata
+        // GET esb_ppr_repository/category/_search
+        // {
+        //   "query": {
+        //     "nested": {
+        //       "path": "service",
+        //       "query": {
+        //             "match": {
+        //               "service.id": 1393
+        //           }
+        //
+        //       },
+        //       "inner_hits": {}
+        //     }
+        //   },
+        //   "_source": false
+        // }
+        //
         let newTrace = new Trace(casual.uuid,
                                  trace.message_guid,
-                                 trace.status,
+                                 "ERROR",
+                                 trace.service_name,
                                  trace.service_id
                                );
 
@@ -53,7 +67,7 @@ if( !isMockMode() ) {
     }
 
     consumer.init().then( function() {
-      return consumer.subscribe('eventlogagg', 0,
+      return consumer.subscribe('esbmsgs_ppr', 0,
                                 dataHandler);
     })
 }
@@ -62,7 +76,7 @@ const pubsub = new PubSub();
 const TRACE_ADDED_TOPIC = 'newTrace';
 const SERVICE_REQUEST_DELETED_TOPIC = 'deletedSReq';
 
-const esHost = isMockMode() ? 'localhost' : '10.1.70.47';
+const esHost = EsbAPI.isMockMode() ? 'localhost' : '10.1.70.47';
 var elasticClient = new elasticsearch.Client({
   host: `${esHost}:9200`
   //log: 'trace'
@@ -74,95 +88,22 @@ elasticClient.cluster.health({}, function(err, resp, status) {
   console.log("Elastic Health: ", resp);
 })
 
-const MOCK_TIMEOUT = 1000;
 
-class EsbAPI {
+const esbRepository = new EsbAPI.Repository(elasticClient);
 
-  static getCategory(categoryId: number) : Promise {
 
-    return new Promise( (resolve, reject) => {
-
-        setTimeout( () => {
-
-          let category = mockCategories.find(category => category.CategoryId == categoryId);
-          resolve(category);
-
-        }, MOCK_TIMEOUT);
-    })
-
+class Category {
+  constructor(id: String,
+              objectId: String,
+              name: String) {
+    this.id = id;
+    this.objectId = objectId;
+    this.name = name;
   }
 
-  static getAllCategories(): Promise {
-
-    return new Promise( (resolve, reject) => {
-
-      setTimeout( () => {
-
-        resolve(_.assign([], mockCategories));
-
-      }, MOCK_TIMEOUT);
-    })
+  get services() {
+    return null;
   }
-
-  static getServicesCount() : number {
-    return mockServices.length;
-  }
-
-  static getAllServices() : Promise {
-
-    return new Promise( (resolve, reject) => {
-
-      setTimeout( () => {
-
-        resolve(_.assign([], mockServices));
-
-      }, MOCK_TIMEOUT);
-    });
-
-  }
-
-  static getService(objectId: number) : Service {
-    return new Service(casual.uuid,
-                      objectId,
-                      casual.title,
-                      casual.url);
-  }
-
-  static getServicesByCategoryId(categoryId: number) : Promise {
-
-    return new Promise( (resolve, reject) => {
-
-        setTimeout( () => {
-
-           let categorizedServices = mockServices.filter( (service) => {
-             return service.CategoryId == categoryId;
-           });
-
-           resolve(_.assign([], categorizedServices));
-
-        }, MOCK_TIMEOUT);
-    })
-  }
-
-  static getServiceRequests() : Promise {
-    return new Promise( (resolve, reject) => {
-
-      setTimeout( () => {
-
-        resolve(_.assign([], mockServiceRequests));
-
-      }, MOCK_TIMEOUT);
-    });
-  }
-}
-
-function isMockMode(): boolean {
-
-  let mockToken = process.argv.find( (arg: string) => {
-    return arg == "--mock"
-  });
-
-  return mockToken;
 }
 
 class SetInfo {
@@ -206,61 +147,80 @@ class Repository {
     this.id = repositoryId;
 
     this.services = this.services.bind(this);
+    this.service = this.service.bind(this);
     this.categories = this.categories.bind(this);
+  }
+
+  service({Id}) {
+    if( EsbAPI.isMockMode() ) {
+
+      return EsbAPI.getService(Id);
+
+    }
   }
 
   services({categoryId, page, pageSize}) {
 
     //const categoryId = param.categoryId;
-    if( isMockMode() ) {
+    if( EsbAPI.isMockMode() ) {
 
       if( !categoryId ) {
 
-        let promise = EsbAPI.getAllServices();
+        return new SetInfo(esbRepository.services.length,
+                           esbRepository.services);
 
-        return new SetInfo(EsbAPI.getServicesCount(),
-          promise.then( res => (
-
-            res.map( service => (
-
-              {
-                id: 'svc' +  service.Id,
-                objectId: service.Id,
-                categoryId: service.CategoryId,
-                name: service.Name,
-                address: service.Url,
-                sla: service.ExpectedSla
-              }
-
-            ))
-
-        ))
-
-      )
+      //   let promise = EsbAPI.Repository.getAllServices();
+      //
+      //   return new SetInfo(EsbAPI.Repository.getServicesCount(),
+      //     promise.then( res => (
+      //
+      //       res.map( service => (
+      //
+      //         {
+      //           id: 'svc' +  service.Id,
+      //           objectId: service.Id,
+      //           categoryId: service.CategoryId,
+      //           name: service.Name,
+      //           address: service.Url,
+      //           sla: service.ExpectedSla
+      //         }
+      //
+      //       ))
+      //
+      //   ))
+      //
+      // )
 
       } else {
 
-        let promise = EsbAPI.getServicesByCategoryId(categoryId);
+        const services = esbRepository.services.filter( service => {
+          return service.categoryId === categoryId
+        })
 
-        return new SetInfo(EsbAPI.getServicesCount(),
-          promise.then( res => (
+        return new SetInfo(services.length,
+                           services);
 
-           res.map( service => (
-
-            {
-              id: 'svc' + service.Id,
-              objectId: service.Id,
-              categoryId: service.CategoryId,
-              name: service.Name,
-              address: service.Url,
-              environment: service.environment,
-              sla: service.ServiceSLA
-            }
-
-          ))
-
-        ))
-      );
+      //   let promise = EsbAPI.getServicesByCategoryId(categoryId);
+      //
+      //   return new SetInfo(EsbAPI.getServicesCount(),
+      //     promise.then( res => (
+      //
+      //      res.map( service => (
+      //
+      //       {
+      //         id: 'svc' + service.Id,
+      //         objectId: service.Id,
+      //         categoryId: service.CategoryId,
+      //         name: service.Name,
+      //         address: service.Url,
+      //         environment: service.environment,
+      //         sla: service.ServiceSLA
+      //       }
+      //
+      //     ))
+      //
+      //   ))
+      // );
 
       }
 
@@ -272,88 +232,87 @@ class Repository {
                : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
                'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
 
-      let requestBody = esb.requestBodySearch()
-      .query(
-        esb.nestedQuery()
-        .path('service')
-        .query(
-            esb.matchAllQuery()
-        )
-      );
-
-      return elasticClient.search({
-        index: 'esb_ppr_repository',
-        body: requestBody.toJSON()
-      }).then( response => {
-
-        const totalRows = response.hits.total;
-
-        let services = response.hits.hits.map( hit => {
-          const _service = hit._source.service;
-          return {
-            id: 'svc' + casual.uuid, // service.ServiceId,
-            address: _service.url,
-            name: _service.name,
-            sla: _service.sla
-          }
-        })
-
-        return new SetInfo(totalRows, services);
-
-      });
-
       if( page )
           // 'http://esb01node01/ESBUddiApplication/api/Services'
           url = `http://m2055895-w7/ESBUddiApplication/api/Services?pageNum=${page}&pageSize=${pageSize}`;
 
-      // return rp({
-      //   uri: url,
-      //   headers: {
-      //     'User-Agent': 'GraphQL'
-      //   },
-      //   json: true
-      // }).then( ({list, totalRows}) => {
-      //
-      //   let services = list.map( (service) => (
-      //     {
-      //       id: 'svc' + service.ServiceId,
-      //       objectId: service.ServiceId,
-      //       name: service.Name,
-      //       categoryId: service.CategoryId,
-      //       description: service.Description,
-      //       address: service.Url,
-      //       pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
-      //       environment: ( service.Environment == 1 ) ? "Internal" : "External",
-      //       sla: service.ExpectedSla
-      //     }
-      //   ));
-      //
-      //   return new SetInfo(totalRows, services);
-      //
-      // }).catch( (data) => {
-      //   return Promise.reject(data.error.message);
-      // })
+      return rp({
+        uri: url,
+        headers: {
+          'User-Agent': 'GraphQL'
+        },
+        json: true
+      }).then( ({list, totalRows}) => {
+
+        let services = list.map( (service) => (
+          {
+            id: 'svc' + service.ServiceId,
+            objectId: service.ServiceId,
+            name: service.Name,
+            categoryId: service.CategoryId,
+            description: service.Description,
+            address: service.Url,
+            pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
+            environment: ( service.Environment == 1 ) ? "Internal" : "External",
+            sla: service.ExpectedSla
+          }
+        ));
+
+        return new SetInfo(totalRows, services);
+
+      }).catch( (data) => {
+        return Promise.reject(data.error.message);
+      })
 
     }
   }
 
   categories() {
 
-    if( isMockMode() ) {
+    if( EsbAPI.isMockMode() ) {
 
-        let promise = EsbAPI.getAllCategories();
-        return promise.then( res => {
+      return esbRepository.getCategories();
 
-            return res.map( (category) => {
+      // Use https://elastic-builder.js.org/
+      // to interactively translate JS to JSON query body
 
-              return {
-                id: casual.uuid,
-                objectId: category.CategoryId,
-                name: category.CategoryName
-              }
-            });
+      // const requestBody = esb.requestBodySearch()
+      //   .query(
+      //       esb.matchAllQuery()
+      //   )
+      //   .agg(esb.termsAggregation('unique_categories', 'name')
+      //   .agg(esb.minAggregation('id', 'id')));
+      //
+      //
+      // return elasticClient.search({
+      //   index: 'esb_ppr_repository',
+      //   type: 'category',
+      //   "size": 0,
+      //   body: requestBody.toJSON()
+      // }).then( response => {
+      //
+      //     return response.aggregations.unique_categories.buckets.map( bucket => {
+      //       return new Category(casual.uuid,
+      //                           bucket.id.value,
+      //                           bucket.key);
+      //     });
+      //
+      // });
 
-        });
+        //
+        // let promise = EsbAPI.getAllCategories();
+        // return promise.then( res => {
+        //
+        //     return res.map( (category) => {
+        //
+        //       return {
+        //         id: casual.uuid,
+        //         objectId: category.CategoryId,
+        //         name: category.CategoryName
+        //       }
+        //     });
+        //
+        // });
 
     } else {
 
@@ -385,8 +344,8 @@ class Repository {
 
   serviceRequests() {
 
-    if( isMockMode() ) {
-      let promise = EsbAPI.getServiceRequests();
+    if( EsbAPI.isMockMode() ) {
+      let promise = EsbAPI.Repository.getServiceRequests();
       return promise.then( res => {
 
         return res.map( (request) => {
@@ -587,19 +546,21 @@ class Repository {
 }
 
 class Trace {
-  constructor(id,
-              storyId,
+
+  constructor(id: string,
+              storyId: string,
               status: string,
+              serviceName: string,
               serviceId: number) {
     this.id = id
     this.storyId = storyId;
     this.time = new Date();
-    this.serviceId = serviceId;
+    this.message = 'Request received';
+    this.eventId = casual.integer(1, 1000);
     this.status = status;
 
-    //this.start = start;
-    //this.end = end;
-    //this.latency = moment(end).diff(moment(start));
+    this.serviceName = serviceName;
+    this.serviceId = serviceId;
   }
 
 }
@@ -630,7 +591,7 @@ class Series {
   constructor(labels: string[],
               series: Serie[]) {
 
-    this.id = casual.uuid;
+    this.id = casual.uuid; //'ug4@ds6rt'; ;
     this.labels = labels;
     this.series = series;
 
@@ -641,15 +602,16 @@ class Series {
 class EsbRuntime {
 
   constructor() {
-    this.id = casual.uuid;
+    this.id = 'wq2@5t6' // casual.uuid;
   }
 
   distribution({daysBefore, servicesIds}: {daysBefore: number, servicesIds: number[]}) {
 
-    if( isMockMode() ) {
+    if( EsbAPI.isMockMode() ) {
 
       let labels = [];
-      for(let i = 0; i < daysBefore; i++) {
+      for(let i = daysBefore == 0 ? 0 : 1;
+          i <= daysBefore; i++) {
         labels.push(moment().add(-i, 'days').format('DD/MM/YYYY'))
       }
 
@@ -657,7 +619,8 @@ class EsbRuntime {
       for(let i = 0; i < servicesIds.length; i++) {
          let service = EsbAPI.getService(servicesIds[i]);
          let data = [];
-         for(let j = 0; j < daysBefore; j++ ) {
+         for(let j = daysBefore == 0 ? 0 : 1;
+             j <= daysBefore; j++ ) {
            data.push(casual.integer(10000,30000))
          }
          series.push(new Serie(service.name, data, service.objectId));
@@ -680,7 +643,7 @@ class EsbRuntime {
         histogramAgg.agg(
             esb.filterAggregation(serviceId.toString(), esb.termQuery('service_id', serviceId) )
             .agg(
-                esb.termsAggregation('serviceName', "service_name.keyword")
+                esb.termsAggregation('serviceName', "service_name")
             )
         )
     });
@@ -700,8 +663,8 @@ class EsbRuntime {
 
     console.time('Distribution query');
     return elasticClient.search({
-      index: 'esb_ppr_summary',
-      type: 'summary',
+      index: 'esb_ppr',
+      type: 'correlate_msg',
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
     }).then( response => {
@@ -750,9 +713,10 @@ class EsbRuntime {
 
     let summaries = [];
 
-    if( isMockMode() ) {
+    if( EsbAPI.isMockMode() ) {
 
-      for(let i = 0; i <= before; i++) {
+      for(let i = before == 0 ? 0 : 1;
+          i <= before; i++) {
         summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(10000,30000)));
       }
@@ -777,8 +741,8 @@ class EsbRuntime {
     );
 
     return elasticClient.search({
-        index: 'esb_ppr_summary',
-        type: 'summary',
+        index: 'esb_ppr',
+        type: 'correlate_msg',
         _source: ["trace_Date", "message_guid"],
         "size": 0, // omit hits from putput
         body: requestBody.toJSON()
@@ -798,8 +762,9 @@ class EsbRuntime {
 
     let summaries = [];
 
-    if( isMockMode() ) {
-      for(let i = 0; i <= before; i++) {
+    if( EsbAPI.isMockMode() ) {
+      for(let i = before == 0 ? 0 : 1;
+          i <= before; i++) {
         summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(10, 30)));
       }
@@ -819,15 +784,15 @@ class EsbRuntime {
             .lte('now/h')
     )
     .agg(
-        esb.dateHistogramAggregation('latency', 'esb_Latency', '1h')
+        esb.dateHistogramAggregation('latency', 'trace_Date', '1h')
         .order('_key', "desc")
     );
 
     return elasticClient.search({
-      index: 'esb_ppr_summary',
-      type: 'summary',
+      index: 'esb_ppr',
+      type: 'correlate_msg',
       _source: ["started", "storyId"],
-      "size": 0, // omit hits from putput
+      "size": 0, // omit hits from output
       body: requestBody.toJSON()
     }).then( response => {
 
@@ -845,11 +810,12 @@ class EsbRuntime {
 
     let summaries = [];
 
-    if( isMockMode() ) {
-      for(let i = 0; i <= before; i++) {
-        let date = new Date();
-        date.setDate(date.getDate() - i);
-        summaries.push(new Summary(date, casual.integer(0, 10)));
+    if( EsbAPI.isMockMode() ) {
+
+      for(let i = before == 0 ? 0 : 1;
+          i <= before; i++) {
+        summaries.push(new Summary(moment().add(-i, 'days'),
+                                   casual.integer(0, 10)));
       }
 
       return summaries;
@@ -866,41 +832,24 @@ class EsbRuntime {
                       .gte(from)
                       .lte('now+1d/d')
           )
-          .filter(esb.termsQuery('status', 'Error'))
+          .filter(esb.termsQuery('status', 'ERROR'))
       )
       .agg(
         esb.dateHistogramAggregation('histogram', 'trace_Date', 'day')
       );
 
       return elasticClient.search({
-          index: 'esb_ppr_summary',
-          type: 'summary',
+          index: 'esb_ppr',
+          type: 'correlate_msg',
           "size": 0, // omit hits from putput
            "_source": ["trace_Date", "status"],
           body: requestBody.toJSON()
       }).then( response => {
 
-        const summaries = [];
-
-        let foundIndex = 0;
-        for(let i = 0; i <= before; i++) {
-          let bucket = response.aggregations.histogram.buckets[foundIndex];
-          let bucketDate = moment(bucket.key);
-
-          let _value = 0;
-
-          let date = new Date();
-          date.setDate(date.getDate() - i);
-          let _date = moment(date);
-
-          if( bucketDate.isSame( _date, 'day' ) ) {
-            _value = bucket.doc_count;
-            foundIndex++;
-          }
-
-          summaries.push( new Summary(_date.format('DD-MM-YYYY'), _value) );
-
-        }
+        response.aggregations.histogram.buckets.forEach( bucket => {
+          let date = moment(bucket.key_as_string).format('DD-MM-YYYY');;
+          summaries.push(new Summary(date, bucket.doc_count));
+        });
 
         return summaries;
     })
@@ -945,6 +894,24 @@ export const resolvers = {
 
     runtime: (_, args, context) => {
       return new EsbRuntime()
+    },
+
+    traces: (_,args, context) => {
+
+      let traces = [];
+
+      traces.push(new Trace(casual.uuid,
+                       casual.uuid,
+                       'INFO',
+                       mockServices[0].Name,
+                       mockServices[0].Id));
+
+      return traces;
+    }
+  },
+  Category: {
+    name: ({name}) => {
+      return name.toUpperCase();
     }
   },
 
@@ -952,7 +919,7 @@ export const resolvers = {
 
     addService: function(_, {input}, context) {
 
-      if( isMockMode() ) {
+      if( EsbAPI.isMockMode() ) {
 
         let serviceId = casual.uuid;
         return new ServiceRequest(serviceId,
@@ -1019,7 +986,7 @@ export const resolvers = {
 
         let requestId: number = input;
 
-        if( isMockMode() ) {
+        if( EsbAPI.isMockMode() ) {
             return new Service(casual.uuid,
                                casual.integer(300, 400),
                                casual.title,
@@ -1052,7 +1019,7 @@ export const resolvers = {
 
       const _id = 'sreq' + requestId;
 
-      if( isMockMode() ) {
+      if( EsbAPI.isMockMode() ) {
 
         const serviceRequest = new ServiceRequest(_id);
         pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
@@ -1141,11 +1108,11 @@ export const resolvers = {
         subscribe: () => {
           console.log('Subscribed to traceAdded');
 
-          if( isMockMode() && mockTraceTimerId == null ) {
+          if( EsbAPI.isMockMode() && mockTraceTimerId == null ) {
             mockTraceTimerId = setInterval( () => {
 
               let service = casual.random_element(mockServices);
-              var statuses = ['Success', 'Warning', 'Failure'];
+              var statuses = ['INFO', 'WARNING', 'ERROR'];
               let status = casual.random_element(statuses);
 
               const newTrace = new Trace(casual.uuid, //id
