@@ -66,7 +66,10 @@ type Repository implements Node {
            page: Int,
            pageSize: Int): SetInfo
   categories: [Category]
+  allServices: SetInfo
   serviceRequests: [ServiceRequest]
+  actionBasedServices(soapAction: String): SetInfo
+  urlBasedServices(url: String, verb: String): SetInfo
 }
 
 type Summary implements Node {

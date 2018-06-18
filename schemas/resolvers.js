@@ -440,6 +440,150 @@ class Repository {
     }
   }
 
+  allServices()
+  {
+    let requestBody = esb.requestBodySearch()
+    .query(
+      esb.nestedQuery()
+      .path('service')
+      .query(esb.matchAllQuery())
+      .innerHits(
+        esb.innerHits().source(true).storedFields([])
+      )
+    );
+    try {
+      return elasticClient.search({
+        index: 'esb_ppr_repository',
+        body: requestBody.toJSON()
+      }).then( response => {
+
+        let totalRows = 0;
+        let services = [];
+        response.hits.hits.map( hit => {
+          totalRows += hit.inner_hits.service.hits.hits.length;
+          //return
+          let innerHits = hit.inner_hits.service.hits.hits.map(innerHit =>
+            {
+              const _service = innerHit._source;
+
+              return {
+                id: 'svc' + casual.uuid, // service.ServiceId,
+                address: _service.url,
+                name: _service.name,
+                sla: _service.sla
+              }
+            })
+
+          services.push(...innerHits);
+        })
+
+        return new SetInfo(totalRows, services);
+
+      });
+    }
+    catch(error)
+    {
+      return null;
+    }
+  }
+    actionBasedServices({soapAction})
+    {
+      let requestBody = esb.requestBodySearch()
+      .query(
+        esb.nestedQuery()
+        .path('service')
+        .query(
+            esb.matchPhraseQuery('service.soap_action',soapAction)
+        )
+        .innerHits(
+          esb.innerHits().source(true).storedFields(['service.soap_action'])
+        )
+      );
+
+
+    try {
+      return elasticClient.search({
+        index: 'esb_ppr_repository',
+        body: requestBody.toJSON()
+      }).then( response => {
+
+        let totalRows = 0;
+        let services = [];
+        response.hits.hits.map( hit => {
+          totalRows += hit.inner_hits.service.hits.hits.length;
+          //return
+          let innerHits = hit.inner_hits.service.hits.hits.map(innerHit =>
+            {
+              const _service = innerHit._source;
+
+              return {
+                id: 'svc' + casual.uuid, // service.ServiceId,
+                address: _service.url,
+                name: _service.name,
+                sla: _service.sla
+              }
+            })
+
+          services.push(...innerHits);
+        })
+
+        return new SetInfo(totalRows, services);
+
+      });
+    } catch (e) {
+      return null;
+    }
+   }
+
+   urlBasedServices({url, verb})
+   {
+     let requestBody = esb.requestBodySearch()
+     .query(
+       esb.nestedQuery()
+       .path('service')
+       .query(
+         esb.boolQuery()
+           .must(esb.matchPhraseQuery('service.url',url))
+           .must(esb.matchPhraseQuery('service.verb',verb))
+       )
+       .innerHits(
+         esb.innerHits().source(true).storedFields(['service.url', 'service.verb'])
+       )
+     );
+
+     try {
+       return elasticClient.search({
+         index: 'esb_ppr_repository',
+         body: requestBody.toJSON()
+       }).then( response => {
+
+         let totalRows = 0;
+         let services = [];
+         response.hits.hits.map( hit => {
+           totalRows += hit.inner_hits.service.hits.hits.length;
+           //return
+           let innerHits = hit.inner_hits.service.hits.hits.map(innerHit =>
+             {
+               const _service = innerHit._source;
+
+               return {
+                 id: 'svc' + casual.uuid, // service.ServiceId,
+                 address: _service.url,
+                 name: _service.name,
+                 sla: _service.sla
+               }
+             })
+
+           services.push(...innerHits);
+         })
+
+         return new SetInfo(totalRows, services);
+
+       });
+     } catch (e) {
+       return null;
+     }
+  }
 }
 
 class Trace {
