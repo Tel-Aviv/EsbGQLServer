@@ -68,6 +68,10 @@ type Repository implements Node {
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
   categories: [Category]  @cacheControl(maxAge: 500)
   serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
+
+  allServices: SetInfo
+  actionBasedServices(soapAction: String): SetInfo
+  urlBasedServices(url: String, verb: String): SetInfo
 }
 
 type Summary implements Node {
