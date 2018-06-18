@@ -37,7 +37,7 @@ sql.connect(config, err => {
                 service_id: serviceRow.service_id,
                 name: serviceRow.service_name,
                 sla: serviceRow.expected_sla,
-                soapAction: serviceRow.soap_action,
+                soap_action: serviceRow.soap_action,
                 url: serviceRow.service_uri
             }
 
