@@ -8,7 +8,7 @@ client.indices.putMapping({
   body: {
     "properties": {
          "id": {
-           "type": "integer"
+           "type": "short"
          },
          "name": {
            "type": "keyword"
@@ -26,7 +26,7 @@ client.indices.putMapping({
                }
              },
              "sla": {
-               "type": "integer"
+               "type": "short"
              },
               "service_id": {
                "type": "integer"
