@@ -119,12 +119,27 @@ class Repository {
     });
   }
 
-  getCategories() {
-    return this.categories;
+  getServiceById(id: number): Service {
+
+    return this.services.find( s => (
+      s.objectId === id
+    ));
+
   }
 
-  services() {
-    return this.services;
+  deleteService(serviceId: number) : Service {
+    const service = this.getServiceById(serviceId);
+    if( !service ) {
+      return null;
+    }
+    const index = this.services.indexOf(service);
+
+    if( index > -1 ) {
+      const deleted =  this.services.splice(index, 1);
+      return deleted[0];
+    } else {
+      return null;
+    }
   }
 
   static getAllServices() : Promise {
