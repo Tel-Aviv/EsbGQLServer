@@ -400,66 +400,20 @@ class Repository {
     }
   }
 
-  allServices()
-   {
+
+  actionBasedServices({soapAction}) {
+
      let requestBody = esb.requestBodySearch()
      .query(
        esb.nestedQuery()
        .path('service')
-       .query(esb.matchAllQuery())
+       .query(
+           esb.matchPhraseQuery('service.soap_action',soapAction)
+       )
        .innerHits(
-         esb.innerHits().source(true).storedFields([])
+         esb.innerHits().source(true).storedFields(['service.soap_action'])
        )
      );
-     try {
-       return elasticClient.search({
-         index: 'esb_ppr_repository',
-         body: requestBody.toJSON()
-       }).then( response => {
-
-         let totalRows = 0;
-         let services = [];
-         response.hits.hits.map( hit => {
-           totalRows += hit.inner_hits.service.hits.hits.length;
-           let innerHits = hit.inner_hits.service.hits.hits.map(innerHit =>
-             {
-               const _service = innerHit._source;
-
-               return {
-                 id: 'svc' + casual.uuid, // service.ServiceId,
-                 objectId: _service.id,
-                 address: _service.url,
-                 soapAction: _service.soapAction,
-                 name: _service.name,
-                 sla: _service.sla
-               }
-             })
-
-           services.push(...innerHits);
-         })
-
-         return new SetInfo(totalRows, services);
-
-       });
-     }
-     catch(error)
-     {
-       return null;
-     }
-   }
-     actionBasedServices({soapAction})
-     {
-       let requestBody = esb.requestBodySearch()
-       .query(
-         esb.nestedQuery()
-         .path('service')
-         .query(
-             esb.matchPhraseQuery('service.soap_action',soapAction)
-         )
-         .innerHits(
-           esb.innerHits().source(true).storedFields(['service.soap_action'])
-         )
-       );
 
 
      try {
@@ -496,8 +450,8 @@ class Repository {
      }
     }
 
-    urlBasedServices({url, verb})
-    {
+    urlBasedServices({url, verb}) {
+
       let requestBody = esb.requestBodySearch()
       .query(
         esb.nestedQuery()
@@ -1057,39 +1011,9 @@ export const resolvers = {
 
     },
 
-    disableService(_, {input}, context) {
+    deleteService(_, {serviceId}, context) {
 
-      //if( isMockMode() ) {
-
-        let serviceId = casual.uuid;
-        return new Service(serviceId,
-                           casual.title,
-                           casual.integer(2000, 3000),
-                           input.categoryId,
-                           casual.title,
-                           casual.url,
-                           input.soapAction,
-                           1,
-                           casual.integer(200, 1000),
-                           new Date());
-      //}
-    },
-
-    deleteService(_, {input}, context) {
-      //if( isMockMode() ) {
-
-        let serviceId = casual.uuid;
-        return new Service(serviceId,
-                           casual.title,
-                           casual.integer(2000, 3000),
-                           input.categoryId,
-                           casual.title,
-                           casual.url,
-                           input.soapAction,
-                           1,
-                           casual.integer(200, 1000),
-                           new Date());
-      //}
+        return esbRepository.deleteService(serviceId);
 
     },
 
