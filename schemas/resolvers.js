@@ -160,15 +160,15 @@ class Repository {
     }
   }
 
-  servs({filter, categoryId}) {
+  servs({filter}) {
 
     let _services = esbRepository.services;
 
     if( filter ) {
-      
+
       const filters = Object.keys(filter);
 
-      const _services = _services.filter( service => {
+      _services = _services.filter( service => {
 
         for(let i = 0; i < filters.length; i++) {
           const _filter = filters[i];
