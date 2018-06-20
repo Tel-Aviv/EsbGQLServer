@@ -60,16 +60,16 @@ input ServicesFilter {
   soapAction: String,
   address: String,
   verb: String,
-  categoryId: Int
+  categoryId: Int,
+  name: String
 }
 
 type Repository implements Node {
   id: ID!
   service(Id: Int): Service
-  services(categoryId: Int,
+  services(filter: ServicesFilter,
            page: Int,
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
-  servs(filter: ServicesFilter): SetInfo
   categories: [Category]  @cacheControl(maxAge: 500)
   serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
 
