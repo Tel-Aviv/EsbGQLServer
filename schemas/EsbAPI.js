@@ -104,7 +104,7 @@ class Repository {
         source.service.forEach( (_service, index) => {
 
           const service = new Service(casual.uuid,
-                                      _service.id,
+                                      _service.service_id,
                                       _service.name,
                                       _service.url,
                                       category.objectId,
