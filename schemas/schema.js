@@ -33,16 +33,12 @@ type Service implements Node {
     name: String
     address: String!
     soapAction: String,
-    description: String
     sla: Int
-    when_published: String #Date
-    pattern: String!,
-    environment: String!,
-    available: Boolean
 }
 
 type ServiceRequest implements Node {
   id: ID!
+
   objectId: Int
   name: String
   categoryId: Int
@@ -60,16 +56,23 @@ type SetInfo implements Node {
   list:  [Service]
 }
 
+input ServicesFilter {
+  soapAction: String,
+  address: String,
+  verb: String
+}
+
 type Repository implements Node {
   id: ID!
   service(Id: Int): Service
   services(categoryId: Int,
            page: Int,
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
+  servs(filter: ServicesFilter,
+        categoryId: Int): SetInfo
   categories: [Category]  @cacheControl(maxAge: 500)
   serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
 
-  allServices: SetInfo
   actionBasedServices(soapAction: String): SetInfo
   urlBasedServices(url: String, verb: String): SetInfo
 }
@@ -140,8 +143,7 @@ type Mutation {
   publishServiceRequest(input: Int): Service
   deleteServiceRequest(requestId: Int): ServiceRequest
 
-  disableService(input: Int): Service
-  deleteService(input: Int): Service
+  deleteService(serviceId: Int): Service
 }
 
 type Trace {

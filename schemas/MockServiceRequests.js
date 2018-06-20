@@ -2,7 +2,7 @@ import casual from 'casual';
 
 const mockServiceRequests = [{
   id: 'sreq1',
-  RequestId: casual.integer(200, 2000),
+  RequestId: 1,
   Url: casual.url,
   ServiceName: casual.title,
   OperationName: casual.title,
@@ -14,7 +14,7 @@ const mockServiceRequests = [{
   PublishRequestDate: new Date(),
 }, {
   id: 'sreq2',
-  RequestId: casual.integer(200, 2000),
+  RequestId: 2,
   Url: casual.url,
   ServiceName: casual.title,
   OperationName: casual.title,
