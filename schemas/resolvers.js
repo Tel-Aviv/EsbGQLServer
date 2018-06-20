@@ -160,6 +160,34 @@ class Repository {
     }
   }
 
+  servs({filter, categoryId}) {
+    const filters = Object.keys(filter);
+
+    let _services = esbRepository.services;
+    if( categoryId ) {
+      _services = esbRepository.services.filter( service => service.categoryId === categoryId );
+    }
+
+    const foundServices = _services.filter( service => {
+
+      for(let i = 0; i < filters.length; i++) {
+        const _filter = filters[i];
+        if( filter[_filter] == service[_filter] ) {
+          return true;
+        }
+      }
+
+      // filters.some( _filter => {
+      //   if( service[_filter] === filter[_filter] ) {
+      //     return true;
+      //   }
+      // })
+    });
+
+    return new SetInfo(foundServices.length,
+                       foundServices);
+  }
+
   services({categoryId, page, pageSize}) {
 
     //const categoryId = param.categoryId;
@@ -214,7 +242,6 @@ class Repository {
       //         categoryId: service.CategoryId,
       //         name: service.Name,
       //         address: service.Url,
-      //         environment: service.environment,
       //         sla: service.ServiceSLA
       //       }
       //
@@ -254,7 +281,6 @@ class Repository {
             description: service.Description,
             address: service.Url,
             pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
-            environment: ( service.Environment == 1 ) ? "Internal" : "External",
             sla: service.ExpectedSla
           }
         ));
@@ -359,7 +385,6 @@ class Repository {
             objectId: request.RequestId,
             categoryId: request.CategoryId,
             sla: request.ExpectedSla,
-            environment: request.Environment,
             created: request.PublishRequestDate,
           }
 
@@ -387,7 +412,6 @@ class Repository {
             operationName: request.OperationName,
             name: request.ServiceName,
             categoryId: request.CategoryId,
-            environment: request.Environment,
             sla: request.ExpectedSla,
             created: request.PublishRequestDate
           }
@@ -818,6 +842,8 @@ class EsbRuntime {
 
 class ServiceRequest {
 
+  id: string;
+
   constructor(id: string,
               name: string,
               objectId: number,
@@ -825,7 +851,6 @@ class ServiceRequest {
               operationName: string,
               uri: string,
               soapAction: string,
-              environment: number = 1 | 2,
               sla: number,
               created: Date) {
     this.id = id;
@@ -835,7 +860,6 @@ class ServiceRequest {
     this.operationName = operationName;
     this.address = uri;
     this.soapAction = soapAction;
-    this.environment = (environment == 1) ? 'External' : 'Internal';
     this.sla = sla,
     this.created = new Date(created);
   }
@@ -910,7 +934,6 @@ export const resolvers = {
               "Pattern": input.pattern,
               "Documentation": null,
               "CategoryId": input.categoryId,
-              "Environment": input.environment,
               "OperationName" : null,
               "TargetNameSpace": null
           },
