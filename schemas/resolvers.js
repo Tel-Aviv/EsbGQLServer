@@ -160,7 +160,7 @@ class Repository {
     }
   }
 
-  servs({filter}) {
+  services({filter, page, pageSize}) {
 
     let _services = esbRepository.services;
 
@@ -176,123 +176,11 @@ class Repository {
             return true;
           }
         }
-
-        // filters.some( _filter => {
-        //   if( service[_filter] === filter[_filter] ) {
-        //     return true;
-        //   }
-        // })
       });
     }
 
     return new SetInfo(_services.length,
                        _services);
-  }
-
-  services({categoryId, page, pageSize}) {
-
-    //const categoryId = param.categoryId;
-    if( EsbAPI.isMockMode() ) {
-
-      if( !categoryId ) {
-
-        return new SetInfo(esbRepository.services.length,
-                           esbRepository.services);
-
-      //   let promise = EsbAPI.Repository.getAllServices();
-      //
-      //   return new SetInfo(EsbAPI.Repository.getServicesCount(),
-      //     promise.then( res => (
-      //
-      //       res.map( service => (
-      //
-      //         {
-      //           id: 'svc' +  service.Id,
-      //           objectId: service.Id,
-      //           categoryId: service.CategoryId,
-      //           name: service.Name,
-      //           address: service.Url,
-      //           sla: service.ExpectedSla
-      //         }
-      //
-      //       ))
-      //
-      //   ))
-      //
-      // )
-
-      } else {
-
-        const services = esbRepository.services.filter( service => {
-          return service.categoryId === categoryId
-        })
-
-        return new SetInfo(services.length,
-                           services);
-
-      //   let promise = EsbAPI.getServicesByCategoryId(categoryId);
-      //
-      //   return new SetInfo(EsbAPI.getServicesCount(),
-      //     promise.then( res => (
-      //
-      //      res.map( service => (
-      //
-      //       {
-      //         id: 'svc' + service.Id,
-      //         objectId: service.Id,
-      //         categoryId: service.CategoryId,
-      //         name: service.Name,
-      //         address: service.Url,
-      //         sla: service.ServiceSLA
-      //       }
-      //
-      //     ))
-      //
-      //   ))
-      // );
-
-      }
-
-    } else{
-
-      let url = ( !categoryId ) ?
-               //'http://esb01node01/ESBUddiApplication/api/Services'
-               'http://m2055895-w7/ESBUddiApplication/api/Services'
-               : //'http://esb01node01/ESBUddiApplication/api/Services?categoryId=' + categoryId;
-               'http://m2055895-w7/ESBUddiApplication/api/Services?categoryId=' + categoryId;
-
-      if( page )
-          // 'http://esb01node01/ESBUddiApplication/api/Services'
-          url = `http://m2055895-w7/ESBUddiApplication/api/Services?pageNum=${page}&pageSize=${pageSize}`;
-
-      return rp({
-        uri: url,
-        headers: {
-          'User-Agent': 'GraphQL'
-        },
-        json: true
-      }).then( ({list, totalRows}) => {
-
-        let services = list.map( (service) => (
-          {
-            id: 'svc' + service.ServiceId,
-            objectId: service.ServiceId,
-            name: service.Name,
-            categoryId: service.CategoryId,
-            description: service.Description,
-            address: service.Url,
-            pattern: ( service.PatternId == 1 ) ? "Soap" : "Rest",
-            sla: service.ExpectedSla
-          }
-        ));
-
-        return new SetInfo(totalRows, services);
-
-      }).catch( (data) => {
-        return Promise.reject(data.error.message);
-      })
-
-    }
   }
 
   categories() {
