@@ -59,7 +59,8 @@ type SetInfo implements Node {
 input ServicesFilter {
   soapAction: String,
   address: String,
-  verb: String
+  verb: String,
+  categoryId: Int
 }
 
 type Repository implements Node {
@@ -68,8 +69,7 @@ type Repository implements Node {
   services(categoryId: Int,
            page: Int,
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
-  servs(filter: ServicesFilter,
-        categoryId: Int): SetInfo
+  servs(filter: ServicesFilter): SetInfo
   categories: [Category]  @cacheControl(maxAge: 500)
   serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
 
