@@ -11,7 +11,7 @@
     "put-mappings-repository": "babel-node ./elastic/mappings_repository.js",
     "load-repository-data": "babel-node ./elastic/load_repository_data.js",
     "start": "babel-node server.js --exec babel-node --presets es2015",
-    "debug": "nodemon server.js --exec babel-node --presets es2015 --inspect-brk",
+    "debug": "nodemon server.js --exec babel-node --presets es2015 --plugins transform-class-properties --inspect-brk",
     "debug-mock": "nodemon server.js --exec babel-node --presets es2015 --plugins transform-class-properties --inspect-brk --mock",
     "flow": "flow",
     "test": "jest"
