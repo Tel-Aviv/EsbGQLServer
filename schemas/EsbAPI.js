@@ -108,7 +108,7 @@ class Repository {
                                       _service.name,
                                       _service.url,
                                       category.objectId,
-                                      _service.soapAction,
+                                      _service.soap_action,
                                       _service.sla);
 
           category.esbServices.push(service);
