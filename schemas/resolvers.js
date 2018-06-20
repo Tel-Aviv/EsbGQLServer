@@ -161,31 +161,32 @@ class Repository {
   }
 
   servs({filter, categoryId}) {
-    const filters = Object.keys(filter);
 
     let _services = esbRepository.services;
-    if( categoryId ) {
-      _services = esbRepository.services.filter( service => service.categoryId === categoryId );
+
+    if( filter ) {
+      
+      const filters = Object.keys(filter);
+
+      const _services = _services.filter( service => {
+
+        for(let i = 0; i < filters.length; i++) {
+          const _filter = filters[i];
+          if( filter[_filter] == service[_filter] ) {
+            return true;
+          }
+        }
+
+        // filters.some( _filter => {
+        //   if( service[_filter] === filter[_filter] ) {
+        //     return true;
+        //   }
+        // })
+      });
     }
 
-    const foundServices = _services.filter( service => {
-
-      for(let i = 0; i < filters.length; i++) {
-        const _filter = filters[i];
-        if( filter[_filter] == service[_filter] ) {
-          return true;
-        }
-      }
-
-      // filters.some( _filter => {
-      //   if( service[_filter] === filter[_filter] ) {
-      //     return true;
-      //   }
-      // })
-    });
-
-    return new SetInfo(foundServices.length,
-                       foundServices);
+    return new SetInfo(_services.length,
+                       _services);
   }
 
   services({categoryId, page, pageSize}) {
