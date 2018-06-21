@@ -1,8 +1,31 @@
 // @flow
 let client = require('./connection');
+var myArgs = require('optimist').argv,
+    help1 = 'No environment is specified. Add -e prod or -e ppr to CLI',
+    help2 = ' is unknown environment. Use \'prod\' or \'ppr\'!';
+
+if( !myArgs.e ) {
+  console.log(help1);
+  process.exit(0);
+}
+
+let esIndexName = 'esb_ppr_repository';
+switch( myArgs.e ) {
+  case "prod": {
+    esIndexName = 'esb_repository'
+  }
+  break;
+
+  case "ppr": break;
+
+  default: {
+    console.log('\'' + myArgs.e +'\'' + help2);
+    process.exit(0);
+  }
+}
 
 client.indices.putMapping({
-  index: 'esb_ppr_repository',
+  index: esIndexName,
   type: 'categories',
   timeout: '10m',
   body: {
