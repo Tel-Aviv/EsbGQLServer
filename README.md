@@ -19,9 +19,9 @@ or if you have access to MS SQLServer with real data: <code>yarn load-data</code
 
 
 ### Then start GraphQL server
-<code>$ yarn debug</code> to start debugging with Chrome NIM
+<code>$ yarn debug --e prod (--e ppr)</code> to start debugging with Chrome NIM (Note double dash(--) before environment name. This is because this parameter is passed to nodemon)
 
-<code>$ yarn debug-mock</code> to debug with Chrome NIM using mocked services
+<code>$ yarn debug-mock -e prod (--e ppr)</code> to debug with Chrome NIM using mocked services
 
 Production is configured to run on <code>babel-node</code>, so before running <code>start</code>, ensure you get <code>babel-node</code> by installing [babel-cli](https://babeljs.io/docs/usage/cli/).
 
