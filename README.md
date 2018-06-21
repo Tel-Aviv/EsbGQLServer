@@ -7,7 +7,7 @@
 a). Prepare 'esb_repository' index
   1. Ensure you have 'esb_repository' index: <code>HEAD esb_repository</code>
   2. If this index does not exist, execute <code>PUT esb_repository { "settings": { "number_of_shards": 1 }}</code>
-  3. Put mapping on this index by executing <code>node ./elastic/mapping_repository.js <b>-e prod</b></code>
+  3. Put mapping on this index by executing <code>node ./elastic/mapping_repository.js <b>-e prod</b></code> (<code>yarn mapping_repository</code>)
   4. Load SQL data to this index by executing <code>node ./elastic/load_metadata.js <b>-e prod</b></code>
   5. Check you're done: <code>GET esb_repository/_search { "query": { "match_all": {} }}</code>
   
