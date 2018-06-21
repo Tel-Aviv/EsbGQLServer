@@ -28,6 +28,7 @@ class Service {
   categoryId: number;
   soapAction: String;
   sla: number;
+  verb: String;
 
   constructor(id: String,
               objectId: number,
