@@ -8,7 +8,9 @@ a). Prepare 'esb_repository' index
   1. Ensure you have 'esb_repository' index: <code>HEAD esb_repository</code>
   2. If this index does not exist, execute <code>PUT esb_repository { "settings": { "number_of_shards": 1 }}</code>
   3. Put mapping on this index by executing <code>node ./elastic/mapping_repository.js <b>-e prod</b></code>
-  4. Load SQL data to this index by executin <code>node ./elastic/load_metadata.js <b>-e prod</b></code>
+  4. Load SQL data to this index by executing <code>node ./elastic/load_metadata.js <b>-e prod</b></code>
+  5. Check you're done: <code>GET esb_repository/_search { "query": { "match_all": {} }}</code>
+  
 b). Prepare runtime indexes
   1. Start with ensure you have <i>'esb_ppr'</i> index. If you don't have a such, run: <code>yarn create-index</code>, elsewhere you may want to delete the existing one: issue <code>DELETE /esb_ppr</code> to Elasticsearch host
   2. Put mappings to this index: <code>yarn put-mappings</code>
