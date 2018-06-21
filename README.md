@@ -3,7 +3,7 @@
 
 ## How to build/debug
 
-### If you intending to work against Elasticsearch
+### If you intending to work against Elasticsearch (Mock mode may be simpler :) )
 a). Prepare 'esb_repository' index
   1. Ensure you have 'esb_repository' index: <code>HEAD esb_repository</code>
   2. If this index does not exist, execute <code>PUT esb_repository { "settings": { "number_of_shards": 1 }}</code>
