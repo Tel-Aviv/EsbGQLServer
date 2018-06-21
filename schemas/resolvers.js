@@ -117,28 +117,6 @@ class SetInfo {
 
 }
 
-class Service {
-
-  constructor(id: string,
-              objectId: number,
-              name: string,
-              address: string,
-              description: string,
-              sla: number,
-              categoryId: number,
-              when_published: Date) {
-    this.id = id;
-    this.objectId = objectId;
-    this.name = name;
-    this.address = address;
-    this.description = description;
-    this.sla = sla;
-    this.categoryId = categoryId;
-    this.when_published = when_published;
-  }
-
-}
-
 const repositoryId : string = casual.uuid;
 
 class Repository {
@@ -172,10 +150,11 @@ class Repository {
 
         for(let i = 0; i < filters.length; i++) {
           const _filter = filters[i];
-          if( filter[_filter] == service[_filter] ) {
-            return true;
+          if( filter[_filter] != service[_filter] ) {
+            return false;
           }
         }
+        return true;
       });
     }
 
@@ -850,77 +829,6 @@ export const resolvers = {
         });
 
       }
-    },
-
-    publishServiceRequest: function(_, {input}, context): Service {
-
-        let requestId: number = input;
-
-        if( EsbAPI.isMockMode() ) {
-            return new Service(casual.uuid,
-                               casual.integer(300, 400),
-                               casual.title,
-                               casual.url,
-                               casual.description,
-                               casual.integer(100, 200),
-                               casual.integer(1,2),
-                               new Date());
-        } else {
-            const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
-
-            return rp({
-              method: 'POST',
-              uri: url,
-              headers: {
-                'User-Agent': 'GraphQL',
-                'Accept': 'application/json'
-              },
-              json: true
-            }).then( res => {
-              console.log(res);
-            }).catch( err => {
-              console.log(err);
-              return new GraphQLError(err.error.Message);
-            });
-        }
-    },
-
-    deleteServiceRequest: function(_, {requestId} : { requestId: number}) {
-
-      const _id = 'sreq' + requestId;
-
-      if( EsbAPI.isMockMode() ) {
-
-        const serviceRequest = new ServiceRequest(_id);
-        pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
-            serviceRequestDeleted: serviceRequest
-        });
-        return serviceRequest;
-
-      } else {
-        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
-        return rp({
-          method: 'DELETE',
-          uri: url,
-          headers: {
-            'User-Agent': 'GraphQL',
-            'Accept': 'application/json'
-          },
-          json: true
-        }).then( res => {
-
-          let serviceRequest = new ServiceRequest(_id);
-          pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
-              serviceRequestDeleted: serviceRequest
-          });
-          return serviceRequest;
-
-        }).catch( err => {
-          console.log(err);
-          return new GraphQLError(err.error.Message);
-        })
-      }
-
     },
 
     deleteService(_, {serviceId}, context) {
