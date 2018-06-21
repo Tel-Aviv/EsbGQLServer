@@ -35,7 +35,8 @@ class Service {
               address: String,
               categoryId: number,
               soapAction: String,
-              sla: number) {
+              sla: number,
+              verb: String) {
 
     this.id = 'svc' + id;
     this.objectId = objectId;
@@ -44,7 +45,7 @@ class Service {
     this.categoryId = categoryId;
     this.soapAction = soapAction;
     this.sla = sla;
-
+    this.verb = verb;
   }
 };
 
@@ -109,7 +110,8 @@ class Repository {
                                       _service.url,
                                       category.objectId,
                                       _service.soap_action,
-                                      _service.sla);
+                                      _service.sla,
+                                      _service.verb);
 
           category.esbServices.push(service);
           this.services.push(service);
