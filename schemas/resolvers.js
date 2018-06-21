@@ -35,28 +35,11 @@ if( !EsbAPI.isMockMode() ) {
 
         // Map serviceId to metadata
         const esbService = esbRepository.getServiceById(trace.service_id);
-        // GET esb_ppr_repository/category/_search
-        // {
-        //   "query": {
-        //     "nested": {
-        //       "path": "service",
-        //       "query": {
-        //             "match": {
-        //               "service.id": 1393
-        //           }
-        //
-        //       },
-        //       "inner_hits": {}
-        //     }
-        //   },
-        //   "_source": false
-        // }
-        //
         let newTrace = new Trace(casual.uuid,
                                  trace.message_guid,
                                  "ERROR",
-                                 trace.service_name,
-                                 trace.service_id
+                                 esbService.name,
+                                 esbService.service_id
                                );
 
         pubsub.publish(TRACE_ADDED_TOPIC, {
