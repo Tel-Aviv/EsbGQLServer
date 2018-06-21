@@ -117,6 +117,28 @@ class SetInfo {
 
 }
 
+class Service {
+
+  constructor(id: string,
+              objectId: number,
+              name: string,
+              address: string,
+              description: string,
+              sla: number,
+              categoryId: number,
+              verb: string) {
+    this.id = id;
+    this.objectId = objectId;
+    this.name = name;
+    this.address = address;
+    this.description = description;
+    this.sla = sla;
+    this.categoryId = categoryId;
+    this.verb = verb;
+  }
+
+}
+
 const repositoryId : string = casual.uuid;
 
 class Repository {
@@ -291,107 +313,6 @@ class Repository {
 
     }
   }
-
-
-  actionBasedServices({soapAction}) {
-
-     let requestBody = esb.requestBodySearch()
-     .query(
-       esb.nestedQuery()
-       .path('service')
-       .query(
-           esb.matchPhraseQuery('service.soap_action',soapAction)
-       )
-       .innerHits(
-         esb.innerHits().source(true).storedFields(['service.soap_action'])
-       )
-     );
-
-
-     try {
-       return elasticClient.search({
-         index: 'esb_ppr_repository',
-         body: requestBody.toJSON()
-       }).then( response => {
-
-         let totalRows = 0;
-         let services = [];
-         response.hits.hits.map( hit => {
-           totalRows += hit.inner_hits.service.hits.hits.length;
-
-           let innerHits = hit.inner_hits.service.hits.hits.map(innerHit =>
-             {
-               const _service = innerHit._source;
-
-               return {
-                 id: 'svc' + casual.uuid, // service.ServiceId,
-                 address: _service.url,
-                 name: _service.name,
-                 sla: _service.sla
-               }
-             })
-
-           services.push(...innerHits);
-         })
-
-         return new SetInfo(totalRows, services);
-
-       });
-     } catch (e) {
-       return null;
-     }
-    }
-
-    urlBasedServices({url, verb}) {
-
-      let requestBody = esb.requestBodySearch()
-      .query(
-        esb.nestedQuery()
-        .path('service')
-        .query(
-          esb.boolQuery()
-            .must(esb.matchPhraseQuery('service.url',url))
-            .must(esb.matchPhraseQuery('service.verb',verb))
-        )
-        .innerHits(
-          esb.innerHits().source(true).storedFields(['service.url', 'service.verb'])
-        )
-      );
-
-      try {
-        return elasticClient.search({
-          index: 'esb_ppr_repository',
-          body: requestBody.toJSON()
-        }).then( response => {
-
-          let totalRows = 0;
-          let services = [];
-          response.hits.hits.map( hit => {
-            totalRows += hit.inner_hits.service.hits.hits.length;
-
-            let innerHits = hit.inner_hits.service.hits.hits.map(innerHit =>
-              {
-                const _service = innerHit._source;
-
-                return {
-                  id: 'svc' + casual.uuid, // service.ServiceId,
-                  address: _service.url,
-                  name: _service.name,
-                  sla: _service.sla
-                }
-              })
-
-            services.push(...innerHits);
-          })
-
-          return new SetInfo(totalRows, services);
-
-        });
-      } catch (e) {
-        return null;
-      }
-   }
-
 
 }
 
@@ -829,6 +750,77 @@ export const resolvers = {
         });
 
       }
+    },
+
+    publishServiceRequest: function(_, {input}, context): Service {
+
+        let requestId: number = input;
+
+        if( EsbAPI.isMockMode() ) {
+            return new Service(casual.uuid,
+                               casual.integer(300, 400),
+                               casual.title,
+                               casual.url,
+                               casual.description,
+                               casual.integer(100, 200),
+                               casual.integer(1,2),
+                               new Date());
+        } else {
+            const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
+
+            return rp({
+              method: 'POST',
+              uri: url,
+              headers: {
+                'User-Agent': 'GraphQL',
+                'Accept': 'application/json'
+              },
+              json: true
+            }).then( res => {
+              console.log(res);
+            }).catch( err => {
+              console.log(err);
+              return new GraphQLError(err.error.Message);
+            });
+        }
+    },
+
+    deleteServiceRequest: function(_, {requestId} : { requestId: number}) {
+
+      const _id = 'sreq' + requestId;
+
+      if( EsbAPI.isMockMode() ) {
+
+        const serviceRequest = new ServiceRequest(_id);
+        pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
+            serviceRequestDeleted: serviceRequest
+        });
+        return serviceRequest;
+
+      } else {
+        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
+        return rp({
+          method: 'DELETE',
+          uri: url,
+          headers: {
+            'User-Agent': 'GraphQL',
+            'Accept': 'application/json'
+          },
+          json: true
+        }).then( res => {
+
+          let serviceRequest = new ServiceRequest(_id);
+          pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
+              serviceRequestDeleted: serviceRequest
+          });
+          return serviceRequest;
+
+        }).catch( err => {
+          console.log(err);
+          return new GraphQLError(err.error.Message);
+        })
+      }
+
     },
 
     deleteService(_, {serviceId}, context) {
