@@ -33,7 +33,7 @@ type Service implements Node {
     name: String
     address: String!
     soapAction: String,
-    sla: Int
+    sla: Int,
     verb: String
 }
 
@@ -61,8 +61,7 @@ input ServicesFilter {
   soapAction: String,
   address: String,
   verb: String,
-  categoryId: Int,
-  name: String
+  categoryId: Int
 }
 
 type Repository implements Node {
@@ -71,11 +70,11 @@ type Repository implements Node {
   services(filter: ServicesFilter,
            page: Int,
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
+  servs(filter: ServicesFilter): SetInfo
   categories: [Category]  @cacheControl(maxAge: 500)
   serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
 
-  actionBasedServices(soapAction: String): SetInfo
-  urlBasedServices(url: String, verb: String): SetInfo
+
 }
 
 type Summary implements Node {
@@ -140,6 +139,10 @@ type Message {
 
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
+
+  publishServiceRequest(input: Int): Service
+  deleteServiceRequest(requestId: Int): ServiceRequest
+
   deleteService(serviceId: Int): Service
 }
 
