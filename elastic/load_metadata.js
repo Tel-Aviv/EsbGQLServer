@@ -26,7 +26,8 @@ sql.connect(config, err => {
     request.on('row', row => {
         const servicesRequest = new sql.Request()
         servicesRequest.stream = true // foreach category get its services
-        servicesRequest.query('SELECT s.service_id, replace(contract_key_name, \'ESB.CONTRACT.\', \'\') as [service_name], [service_uri], [soap_action], s.[expected_sla] ' +
+        servicesRequest.query('SELECT s.service_id, replace(contract_key_name, \'ESB.CONTRACT.\', \'\') as [service_name], ' +
+            '[service_uri], [soap_action], s.[expected_sla], s.pattern_id ' +
             'FROM [db653].[dbo].[t_esb_core_service] s inner join [db653].[dbo].[t_esb_gov_service_approval_stage] sap on s.service_id = sap.service_id ' +
             'inner join [db653].[dbo].[t_esb_core_msg_contract] c on sap.contract_key_id = c.contract_key_id ' +
             'WHERE sap.contract_category_id = ' + row.category_id);
@@ -34,11 +35,13 @@ sql.connect(config, err => {
         // add service to services array
         servicesRequest.on('row', serviceRow => {
             let service = {
+
                 service_id: serviceRow.service_id,
                 name: serviceRow.service_name,
                 sla: serviceRow.expected_sla,
-                soapAction: serviceRow.soap_action,
-                url: serviceRow.service_uri
+                soap_action: serviceRow.soap_action,
+                url: serviceRow.service_uri,
+                verb: ( serviceRow.pattern_id == 3 ) ? "GET" : "POST"
             }
 
             services.push(service);
@@ -53,13 +56,13 @@ sql.connect(config, err => {
             let record = {
                 id: row.category_id,
                 name: row.category_name,
-                services: services
+                service: services
             }
 
             bulk.push(
                 { index: { _index: 'esb_ppr_repository', _id: currentIndex++, _type: 'categories' } },
                 record);
-            console.log(record.services.length);
+            console.log(record.service.length);
 
             if (currentIndex == count)
             {
