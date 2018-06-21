@@ -13,6 +13,7 @@ a). Prepare 'esb_repository' index
   }
 }
   </code>
+  3. Put mapping on this index by executing <code>node ./elastic/mapping_repository.js <b>-e prod</b></code>
 b). Prepare runtime indexes
   1. Start with ensure you have <i>'esb_ppr'</i> index. If you don't have a such, run: <code>yarn create-index</code>, elsewhere you may want to delete the existing one: issue <code>DELETE /esb_ppr</code> to Elasticsearch host
   2. Put mappings to this index: <code>yarn put-mappings</code>
