@@ -34,6 +34,7 @@ type Service implements Node {
     address: String!
     soapAction: String,
     sla: Int
+    verb: String
 }
 
 type ServiceRequest implements Node {
@@ -139,10 +140,6 @@ type Message {
 
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
-
-  publishServiceRequest(input: Int): Service
-  deleteServiceRequest(requestId: Int): ServiceRequest
-
   deleteService(serviceId: Int): Service
 }
 
