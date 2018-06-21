@@ -3,6 +3,8 @@ import _ from 'lodash';
 import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
 import casual from 'casual';
+var myArgs = require('optimist').argv,
+      help = "No environment is specified. Add -e prod or -e ppr to CLI";
 
 import mockServices from './MockServices';
 import mockServiceRequests from './MockServiceRequests';
@@ -17,6 +19,22 @@ function isMockMode(): boolean {
   });
 
   return mockToken;
+}
+
+let esIndexName = 'esb_ppr_repository';
+switch ( myArgs.e ) {
+  case "prod": {
+    esIndexName = 'esb_repository'
+  }
+  break;
+
+  case "ppr": break;
+
+  default: {
+    console.log(help);
+    process.exit(0);
+  }
+
 }
 
 class Service {
@@ -89,7 +107,7 @@ class Repository {
     )
 
     elasticClient.search({
-      index: 'esb_ppr_repository',
+      index: esIndexName,
       body: requestBody.toJSON()
     }).then( response => {
       console.log(response);
