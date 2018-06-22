@@ -1,33 +1,33 @@
 import casual from 'casual';
 
 const mockServices = [{
-    Id: 1,
+    id: 1,
     CategoryId: 1,
-    Name: 'מיקי',
+    name: 'מיקי',
     Url: casual.url,
     ExpectedSla: 200
   }, {
-    Id: 2,
+    id: 2,
     CategoryId: 2,
-    Name: 'שירות אולג',
+    name: 'שירות אולג',
     Url: casual.url,
     ExpectedSla: 150
 }, {
-  Id: 3,
+  id: 3,
   CategoryId: 2,
-  Name: 'מייק SAP',
+  name: 'מייק SAP',
   Url: casual.url,
   ExpectedSla: 140
 },{
-  Id: 4,
+  id: 4,
   CategoryId: 2,
-  Name: 'Mock Service 1',
+  name: 'Mock Service 1',
   Url: casual.url,
   ExpectedSla: 140
 }, {
-  Id: 5,
+  id: 5,
   CategoryId: 2,
-  Name: 'Mock Service 2',
+  name: 'Mock Service 2',
   Url: casual.url,
   ExpectedSla: 140
 }];
