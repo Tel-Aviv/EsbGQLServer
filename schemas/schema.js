@@ -67,14 +67,13 @@ input ServicesFilter {
 type Repository implements Node {
   id: ID!
   service(Id: Int): Service
-  services(filter: ServicesFilter,
+  services(categoryId: Int,
+        page: Int,
+        pageSize: Int): SetInfo @cacheControl(maxAge: 500),
+  _services(filter: ServicesFilter,
            page: Int,
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
-  servs(filter: ServicesFilter): SetInfo
   categories: [Category]  @cacheControl(maxAge: 500)
-  serviceRequests: [ServiceRequest]  @cacheControl(maxAge: 500)
-
-
 }
 
 type Summary implements Node {
@@ -140,22 +139,17 @@ type Message {
 type Mutation {
   addService(input: ServiceInput): ServiceRequest
 
-  publishServiceRequest(input: Int): Service
-  deleteServiceRequest(requestId: Int): ServiceRequest
-
   deleteService(serviceId: Int): Service
 }
 
 type Trace {
   id: ID!
-
   storyId: ID!
-  time: Date!
+  status: String
   serviceName: String!
   serviceId: Int!
   message: String
-  eventId: Int
-  status: String
+  received: Date
 }
 
 type Subscription {
