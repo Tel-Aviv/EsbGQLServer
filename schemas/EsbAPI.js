@@ -3,8 +3,6 @@ import _ from 'lodash';
 import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
 import casual from 'casual';
-var myArgs = require('optimist').argv,
-      help = "No environment is specified. Add -e prod or -e ppr to CLI";
 
 import mockServices from './MockServices';
 import mockServiceRequests from './MockServiceRequests';
@@ -19,22 +17,6 @@ function isMockMode(): boolean {
   });
 
   return mockToken;
-}
-
-let esIndexName = 'esb_ppr_repository';
-switch ( myArgs.e ) {
-  case "prod": {
-    esIndexName = 'esb_repository'
-  }
-  break;
-
-  case "ppr": break;
-
-  default: {
-    console.log(help);
-    process.exit(0);
-  }
-
 }
 
 class Service {
@@ -100,44 +82,52 @@ class Repository {
     this.categories = [];
     this.services = [];
 
-    const elasticClient = props;
-    const requestBody = esb.requestBodySearch()
-    .query(
-        esb.matchAllQuery()
-    )
+    // if( isMockMode ) {
+    //
+    //   this.services = mockServices;
+    //   this.categories = mockCategories;
+    //
+    // } else {
 
-    elasticClient.search({
-      index: esIndexName,
-      body: requestBody.toJSON()
-    }).then( response => {
-      console.log(response);
+      const elasticClient = props;
+      const requestBody = esb.requestBodySearch()
+      .query(
+          esb.matchAllQuery()
+      )
 
-      response.hits.hits.forEach( (bucket, index) => {
+      elasticClient.search({
+        index: 'esb_ppr_repository',
+        body: requestBody.toJSON()
+      }).then( response => {
+        console.log(response);
 
-        const source = bucket._source;
-        const category = new Category(casual.uuid,
-                                      source.id,
-                                      source.name);
+        response.hits.hits.forEach( (bucket, index) => {
 
-        this.categories.push( category );
+          const source = bucket._source;
+          const category = new Category(casual.uuid,
+                                        source.id,
+                                        source.name);
 
-        source.service.forEach( (_service, index) => {
+          this.categories.push( category );
 
-          const service = new Service(casual.uuid,
-                                      _service.service_id,
-                                      _service.name,
-                                      _service.url,
-                                      category.objectId,
-                                      _service.soap_action,
-                                      _service.sla,
-                                      _service.verb);
+          source.service.forEach( (_service, index) => {
 
-          category.esbServices.push(service);
-          this.services.push(service);
+            const service = new Service(casual.uuid,
+                                        _service.service_id,
+                                        _service.name,
+                                        _service.url,
+                                        category.objectId,
+                                        _service.soap_action,
+                                        _service.sla,
+                                        _service.verb);
+
+            category.esbServices.push(service);
+            this.services.push(service);
+          })
         })
-      })
 
-    });
+      });
+    //}
   }
 
   getServiceById(id: number): Service {
