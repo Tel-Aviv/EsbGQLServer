@@ -39,7 +39,8 @@ if( !EsbAPI.isMockMode() ) {
                                  trace.message_guid,
                                  "ERROR",
                                  esbService.name,
-                                 esbService.service_id
+                                 esbService.service_id,
+                                 trace.message
                                );
 
         pubsub.publish(TRACE_ADDED_TOPIC, {
@@ -143,7 +144,19 @@ class Repository {
     }
   }
 
-  services({filter, page, pageSize}) {
+  services({categoryId, page, pageSize}) : SetInfo {
+
+    let _services = esbRepository.services;
+    if( categoryId ) {
+      _services = _services.filter( _service => {
+        return _service.categoryId == categoryId
+      });
+    }
+    return new SetInfo(_services.length,
+                       _services);
+  }
+
+  _services({filter, page, pageSize}) : SetInfo {
 
     let _services = esbRepository.services;
 
@@ -242,79 +255,31 @@ class Repository {
     }
   }
 
-  serviceRequests() {
-
-    if( EsbAPI.isMockMode() ) {
-      let promise = EsbAPI.Repository.getServiceRequests();
-      return promise.then( res => {
-
-        return res.map( (request) => {
-
-          return {
-            id:  request.id,
-            address: request.Url,
-            operationName: request.OperationName,
-            name: request.ServiceName,
-            objectId: request.RequestId,
-            categoryId: request.CategoryId,
-            sla: request.ExpectedSla,
-            created: request.PublishRequestDate,
-          }
-
-        });
-
-      });
-    } else {
-
-      //const url = 'http://esb01/ESBUddiApplication/api/PublishRequest';
-      const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest'
-
-      return rp({
-        uri: url,
-        headers: {
-          'User-Agent': 'GraphQL'
-        },
-        json: true
-      }).then( res => {
-
-        return res.map( (request) => {
-          return {
-            id:  'sreq' + request.RequestId, //casual.uuid,
-            objectId: request.RequestId,
-            address: request.Url,
-            operationName: request.OperationName,
-            name: request.ServiceName,
-            categoryId: request.CategoryId,
-            sla: request.ExpectedSla,
-            created: request.PublishRequestDate
-          }
-        });
-
-      }).catch( (data) => {
-        return Promise.reject(data.error.message);
-      })
-
-    }
-  }
-
 }
 
 class Trace {
 
-  constructor(id: string,
-              storyId: string,
-              status: string,
-              serviceName: string,
-              serviceId: number) {
+  id: String;
+  storyId: String;
+  status: String;
+  serviceName: String;
+  serviceId: Number;
+  message: String;
+  received: Date;
+
+  constructor(id: String,
+              storyId: String,
+              status: String,
+              serviceName: String,
+              serviceId: Number,
+              message: String) {
     this.id = id
     this.storyId = storyId;
-    this.time = new Date();
-    this.message = 'Request received';
-    this.eventId = casual.integer(1, 1000);
     this.status = status;
-
     this.serviceName = serviceName;
     this.serviceId = serviceId;
+    this.message = message;
+    this.received = new Date();
   }
 
 }
@@ -371,7 +336,8 @@ class EsbRuntime {
 
       let series = [];
       for(let i = 0; i < servicesIds.length; i++) {
-         let service = EsbAPI.getService(servicesIds[i]);
+         //let service = EsbAPI.getService(servicesIds[i]);
+         let service = esbRepository.services[i];
          let data = [];
          for(let j = daysBefore == 0 ? 0 : 1;
              j <= daysBefore; j++ ) {
@@ -735,77 +701,6 @@ export const resolvers = {
       }
     },
 
-    publishServiceRequest: function(_, {input}, context): Service {
-
-        let requestId: number = input;
-
-        if( EsbAPI.isMockMode() ) {
-            return new Service(casual.uuid,
-                               casual.integer(300, 400),
-                               casual.title,
-                               casual.url,
-                               casual.description,
-                               casual.integer(100, 200),
-                               casual.integer(1,2),
-                               new Date());
-        } else {
-            const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
-
-            return rp({
-              method: 'POST',
-              uri: url,
-              headers: {
-                'User-Agent': 'GraphQL',
-                'Accept': 'application/json'
-              },
-              json: true
-            }).then( res => {
-              console.log(res);
-            }).catch( err => {
-              console.log(err);
-              return new GraphQLError(err.error.Message);
-            });
-        }
-    },
-
-    deleteServiceRequest: function(_, {requestId} : { requestId: number}) {
-
-      const _id = 'sreq' + requestId;
-
-      if( EsbAPI.isMockMode() ) {
-
-        const serviceRequest = new ServiceRequest(_id);
-        pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
-            serviceRequestDeleted: serviceRequest
-        });
-        return serviceRequest;
-
-      } else {
-        const url = 'http://m2055895-w7/ESBUddiApplication/api/PublishRequest?requestId=' + requestId;
-        return rp({
-          method: 'DELETE',
-          uri: url,
-          headers: {
-            'User-Agent': 'GraphQL',
-            'Accept': 'application/json'
-          },
-          json: true
-        }).then( res => {
-
-          let serviceRequest = new ServiceRequest(_id);
-          pubsub.publish(SERVICE_REQUEST_DELETED_TOPIC, {
-              serviceRequestDeleted: serviceRequest
-          });
-          return serviceRequest;
-
-        }).catch( err => {
-          console.log(err);
-          return new GraphQLError(err.error.Message);
-        })
-      }
-
-    },
-
     deleteService(_, {serviceId}, context) {
 
         return esbRepository.deleteService(serviceId);
@@ -834,16 +729,17 @@ export const resolvers = {
           if( EsbAPI.isMockMode() && mockTraceTimerId == null ) {
             mockTraceTimerId = setInterval( () => {
 
-              let service = casual.random_element(mockServices);
+              let service = casual.random_element(esbRepository.services);
               var statuses = ['INFO', 'WARNING', 'ERROR'];
               let status = casual.random_element(statuses);
 
               const newTrace = new Trace(casual.uuid, //id
                                          casual.uuid, // storyId
                                          status,
-                                         service.Name,
-                                         service.Id
-                                       );
+                                         service.name,
+                                         service.objectId,
+                                         "Mock message");
+
               return pubsub.publish(TRACE_ADDED_TOPIC, {
                                                           traceAdded: newTrace
                                                          });
