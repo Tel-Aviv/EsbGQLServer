@@ -144,19 +144,7 @@ class Repository {
     }
   }
 
-  services({categoryId, page, pageSize}) : SetInfo {
-
-    let _services = esbRepository.services;
-    if( categoryId ) {
-      _services = _services.filter( _service => {
-        return _service.categoryId == categoryId
-      });
-    }
-    return new SetInfo(_services.length,
-                       _services);
-  }
-
-  _services({filter, page, pageSize}) : SetInfo {
+  services({filter, page, pageSize}) : SetInfo {
 
     let _services = esbRepository.services;
 
