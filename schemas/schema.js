@@ -67,10 +67,7 @@ input ServicesFilter {
 type Repository implements Node {
   id: ID!
   service(Id: Int): Service
-  services(categoryId: Int,
-        page: Int,
-        pageSize: Int): SetInfo @cacheControl(maxAge: 500),
-  _services(filter: ServicesFilter,
+  services(filter: ServicesFilter,
            page: Int,
            pageSize: Int): SetInfo  @cacheControl(maxAge: 500)
   categories: [Category]  @cacheControl(maxAge: 500)
