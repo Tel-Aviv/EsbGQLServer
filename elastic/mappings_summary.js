@@ -46,6 +46,7 @@ client.indices.putMapping({
     }
   }
 },
+                          
 function(err,resp,status){
     if (err) {
       console.log(err);
