@@ -37,11 +37,9 @@ if( !EsbAPI.isMockMode() ) {
         const esbService = esbRepository.getServiceById(trace.service_id);
         let newTrace = new Trace(casual.uuid,
                                  trace.message_guid,
-                                 "ERROR",
+                                 trace.status,
                                  esbService.name,
-                                 esbService.service_id,
-                                 trace.message
-                               );
+                                 trace.service_id);
 
         pubsub.publish(TRACE_ADDED_TOPIC, {
                                             traceAdded: newTrace
@@ -252,21 +250,18 @@ class Trace {
   status: String;
   serviceName: String;
   serviceId: Number;
-  message: String;
   received: Date;
 
   constructor(id: String,
               storyId: String,
               status: String,
               serviceName: String,
-              serviceId: Number,
-              message: String) {
+              serviceId: Number) {
     this.id = id
     this.storyId = storyId;
     this.status = status;
     this.serviceName = serviceName;
     this.serviceId = serviceId;
-    this.message = message;
     this.received = new Date();
   }
 
@@ -725,8 +720,7 @@ export const resolvers = {
                                          casual.uuid, // storyId
                                          status,
                                          service.name,
-                                         service.objectId,
-                                         "Mock message");
+                                         service.objectId);
 
               return pubsub.publish(TRACE_ADDED_TOPIC, {
                                                           traceAdded: newTrace
