@@ -145,7 +145,6 @@ type Trace {
   status: String
   serviceName: String!
   serviceId: Int!
-  message: String
   received: Date
 }
 
