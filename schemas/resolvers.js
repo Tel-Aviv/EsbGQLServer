@@ -346,7 +346,7 @@ class EsbRuntime {
         histogramAgg.agg(
             esb.filterAggregation(serviceId.toString(), esb.termQuery('service_id', serviceId) )
             .agg(
-                esb.termsAggregation('serviceName', "service_name")
+                esb.termsAggregation('serviceName', "service_name.keyword")
             )
         )
     });
@@ -366,7 +366,7 @@ class EsbRuntime {
 
     console.time('Distribution query');
     return elasticClient.search({
-      index: 'esb_ppr',
+      index: 'esb_ppr_summary',
       type: 'correlate_msg',
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
@@ -444,7 +444,7 @@ class EsbRuntime {
     );
 
     return elasticClient.search({
-        index: 'esb_ppr',
+        index: 'esb_ppr_summary',
         type: 'correlate_msg',
         _source: ["trace_Date", "message_guid"],
         "size": 0, // omit hits from putput
@@ -492,7 +492,7 @@ class EsbRuntime {
     );
 
     return elasticClient.search({
-      index: 'esb_ppr',
+      index: 'esb_ppr_summary',
       type: 'correlate_msg',
       _source: ["started", "storyId"],
       "size": 0, // omit hits from output
@@ -542,7 +542,7 @@ class EsbRuntime {
       );
 
       return elasticClient.search({
-          index: 'esb_ppr',
+          index: 'esb_ppr_summary',
           type: 'correlate_msg',
           "size": 0, // omit hits from putput
            "_source": ["trace_Date", "status"],
