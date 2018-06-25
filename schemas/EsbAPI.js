@@ -3,7 +3,7 @@ import _ from 'lodash';
 import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
 import casual from 'casual';
-
+import config from '../config';
 import mockServices from './MockServices';
 import mockServiceRequests from './MockServiceRequests';
 import mockCategories from './MockCategories';
@@ -96,7 +96,7 @@ class Repository {
       )
 
       elasticClient.search({
-        index: 'esb_ppr_repository',
+        index: config.repository_index_name,
         body: requestBody.toJSON()
       }).then( response => {
         console.log(response);
