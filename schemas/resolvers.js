@@ -13,6 +13,7 @@ import { PubSub } from 'graphql-subscriptions';
 //import { KafkaPubSub } from 'graphql-kafka-subscriptions'
 
 import EsbAPI from './EsbAPI';
+import config from '../config';
 
 if( ! EsbAPI.isMockMode() )
    var Kafka = require('no-kafka')
@@ -184,7 +185,7 @@ class Repository {
       //
       //
       // return elasticClient.search({
-      //   index: 'esb_ppr_repository',
+      //   index: config.repository_index_name,
       //   type: 'category',
       //   "size": 0,
       //   body: requestBody.toJSON()
@@ -366,7 +367,7 @@ class EsbRuntime {
 
     console.time('Distribution query');
     return elasticClient.search({
-      index: 'esb_ppr_summary',
+      index: config.summary_index_name,
       type: 'correlate_msg',
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
@@ -444,7 +445,7 @@ class EsbRuntime {
     );
 
     return elasticClient.search({
-        index: 'esb_ppr_summary',
+        index: config.summary_index_name,
         type: 'correlate_msg',
         _source: ["trace_Date", "message_guid"],
         "size": 0, // omit hits from putput
@@ -492,7 +493,7 @@ class EsbRuntime {
     );
 
     return elasticClient.search({
-      index: 'esb_ppr_summary',
+      index: config.summary_index_name,
       type: 'correlate_msg',
       _source: ["started", "storyId"],
       "size": 0, // omit hits from output
@@ -542,7 +543,7 @@ class EsbRuntime {
       );
 
       return elasticClient.search({
-          index: 'esb_ppr_summary',
+          index: config.summary_index_name,
           type: 'correlate_msg',
           "size": 0, // omit hits from putput
            "_source": ["trace_Date", "status"],
