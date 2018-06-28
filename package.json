@@ -8,7 +8,12 @@
     "put-mappings-summary": "babel-node ./elastic/mappings_summary.js",
     "put-mappings-raw": "babel-node ./elastic/mappings_raw.js",
     "load-sample-data": "babel-node ./elastic/load_sample_data.js",
+
     "mapping_repository": "node ./elastic/mapping_repository.js",
+    "create_repository_indices": "node ./elastic/esb_repository/create_repository_indices.js",
+    "create_repository_mapping": "node ./elastic/esb_repository/create_repository_mappings.js",
+    "upload_repository_data": "node ./elastic/esb_repository/upload_repository_data.js",
+
     "load_metadata": "node ./elastic/load_metadata.js",
     "start": "babel-node server.js --exec babel-node --presets es2015 --plugins transform-class-properties",
     "debug": "nodemon server.js --exec babel-node --presets es2015 --plugins transform-class-properties --inspect-brk",
