@@ -108,7 +108,7 @@ class Repository {
                                         source.id,
                                         source.name);
           this.categories.push( category );
-          console.log('Category: ' + category.objectId
+          console.log('Category: ' + category.objectId);
         });
 
         elasticClient.search({
@@ -132,7 +132,8 @@ class Repository {
         });
 
       })
-
+      
+    });
   }
 
   getServiceById(id: number): Service {
