@@ -8,7 +8,7 @@ a). Prepare repository indices: esb_<ppr_>categories and esb_<ppr_>services ( su
   1. Run <code>yarn <b>create_repository_indices</b> -e ppr (-e prod)</code> to (re-)create elastic indices. This script will also delete existing mapping of the indices.
   2. Run <code>yarn <b>create_repository_mapping</b> -e ppr (-e prod)</code> to map this index
   3. Upload SQL data to this index by executing <code>yarn <b>upload_repository_data</b> -e ppr (-e prod)</code> 
-  4. Check you're done: <code>GET esb_repository(esb_ppr_repository)/_search { "query": { "match_all": {} }}</code>
+  4. Check you're done: <code>GET <ppr_>categories/_search { "query": { "match_all": {} }}</code> and <code>GET <ppr_>services/_search { "query": { "match_all": {} }}</code
   
 b). Prepare runtime indexes
   1. Start with ensure you have <i>'esb_ppr_summary'</i> and <i>'esb_summary'</i> index. If you don't have a such, run: <code>yarn create-index</code>, elsewhere you may want to delete the existing one: issue <code>DELETE /esb_ppr</code> to Elasticsearch host
