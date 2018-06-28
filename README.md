@@ -4,12 +4,11 @@
 ## How to build/debug
 
 ### If you intending to work against Elasticsearch (Mock mode may be simpler :blush: )
-a). Prepare 'esb_repository' index
-  1. Ensure you have 'esb_repository' index: <code>HEAD esb_repository</code>
-  2. If this index does not exist, execute <code>PUT esb_repository { "settings": { "number_of_shards": 1 }}</code>
-  3. Put mapping on this index by executing <code>yarn mapping_repository <b>-e prod</b></code> (<code>node ./elastic/mapping_repository.js <b>-e prod</b></code>)
-  4. Load SQL data to this index by executing <code>yarn load_metadata <b>-e prod</b></code> (<code>node ./elastic/load_metadata.js <b>-e prod</b></code>)
-  5. Check you're done: <code>GET esb_repository/_search { "query": { "match_all": {} }}</code>
+a). Prepare 'esb_repository' index ( supply -e <env> parameter according to the desired environment)
+  1. Run <code>yarn <b>create_repository_index</b> -e ppr (-e prod)</code> to create elastic index
+  2. Run <code>yarn <b>create_repository_mapping</b> -e ppr (-e prod)</code> to map this index
+  3. Load SQL data to this index by executing <code>yarn <b>load_repository_data</b> <b>-e prod</b></code> 
+  4. Check you're done: <code>GET esb_repository/_search { "query": { "match_all": {} }}</code>
   
 b). Prepare runtime indexes
   1. Start with ensure you have <i>'esb_ppr_summary'</i> and <i>'esb_summary'</i> index. If you don't have a such, run: <code>yarn create-index</code>, elsewhere you may want to delete the existing one: issue <code>DELETE /esb_ppr</code> to Elasticsearch host
