@@ -168,80 +168,8 @@ class Repository {
   }
 
   categories() {
-
-    if( EsbAPI.isMockMode() ) {
-
-      return esbRepository.categories;
-
-      // Use https://elastic-builder.js.org/
-      // to interactively translate JS to JSON query body
-
-      // const requestBody = esb.requestBodySearch()
-      //   .query(
-      //       esb.matchAllQuery()
-      //   )
-      //   .agg(esb.termsAggregation('unique_categories', 'name')
-      //   .agg(esb.minAggregation('id', 'id')));
-      //
-      //
-      // return elasticClient.search({
-      //   index: config.repository_index_name,
-      //   type: 'category',
-      //   "size": 0,
-      //   body: requestBody.toJSON()
-      // }).then( response => {
-      //
-      //     return response.aggregations.unique_categories.buckets.map( bucket => {
-      //       return new Category(casual.uuid,
-      //                           bucket.id.value,
-      //                           bucket.key);
-      //     });
-      //
-      // });
-
-        //
-        // let promise = EsbAPI.getAllCategories();
-        // return promise.then( res => {
-        //
-        //     return res.map( (category) => {
-        //
-        //       return {
-        //         id: casual.uuid,
-        //         objectId: category.CategoryId,
-        //         name: category.CategoryName
-        //       }
-        //     });
-        //
-        // });
-
-    } else {
-
-        //const url = 'http://esb01node01/ESBUddiApplication/api/Categories';
-        const url = 'http://m2055895-w7/EsbUddiApplication/api/Categories';
-
-        return rp({
-          uri: url,
-          headers: {
-            'User-Agent': 'GraphQL'
-          },
-          json: true
-        }).then( res => {
-
-          return res.map( (category) => {
-            return {
-              id: casual.uuid,
-              objectId: category.CategoryId,
-              name: category.CategoryName
-            }
-          });
-
-        }).catch( (data) => {
-          return Promise.reject(data.error.message);
-        })
-
-    }
+    return esbRepository.categories;
   }
-
 }
 
 class Trace {
@@ -446,7 +374,7 @@ class EsbRuntime {
 
     return elasticClient.search({
         index: config.summary_index_name,
-        type: 'correlate_msg',
+        type: 'summary',
         _source: ["trace_Date", "message_guid"],
         "size": 0, // omit hits from putput
         body: requestBody.toJSON()
@@ -494,7 +422,7 @@ class EsbRuntime {
 
     return elasticClient.search({
       index: config.summary_index_name,
-      type: 'correlate_msg',
+      type: 'summary',
       _source: ["started", "storyId"],
       "size": 0, // omit hits from output
       body: requestBody.toJSON()
@@ -544,7 +472,7 @@ class EsbRuntime {
 
       return elasticClient.search({
           index: config.summary_index_name,
-          type: 'correlate_msg',
+          type: 'summary',
           "size": 0, // omit hits from putput
            "_source": ["trace_Date", "status"],
           body: requestBody.toJSON()
