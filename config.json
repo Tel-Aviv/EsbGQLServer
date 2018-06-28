@@ -1,4 +1,5 @@
 {
-  "repository_index_name": "esb_ppr_services",
+  "categories_index_name": "esb_ppr_categories",
+  "services_index_name": "esb_ppr_services",
   "summary_index_name": "esb_ppr_summary"
 }
