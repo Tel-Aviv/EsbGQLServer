@@ -7,7 +7,7 @@
 a). Prepare 'esb_repository' index ( supply -e <env> parameter according to the desired environment)
   1. Run <code>yarn <b>create_repository_index</b> -e ppr (-e prod)</code> to create elastic index
   2. Run <code>yarn <b>create_repository_mapping</b> -e ppr (-e prod)</code> to map this index
-  3. Load SQL data to this index by executing <code>yarn <b>load_repository_data</b> <b>-e prod</b></code> 
+  3. Load SQL data to this index by executing <code>yarn <b>load_repository_data</b> -e ppr (-e prod)</code> 
   4. Check you're done: <code>GET esb_repository/_search { "query": { "match_all": {} }}</code>
   
 b). Prepare runtime indexes
