@@ -96,19 +96,27 @@ class Repository {
       )
 
       elasticClient.search({
-        index: config.repository_index_name,
+        index: config.categories_index_name,
         body: requestBody.toJSON()
       }).then( response => {
-        console.log(response);
+
+        console.log('Categories count: ' + response.hits.total);
 
         response.hits.hits.forEach( (bucket, index) => {
-
           const source = bucket._source;
           const category = new Category(casual.uuid,
                                         source.id,
                                         source.name);
-
           this.categories.push( category );
+          console.log('Category: ' + category.objectId
+        });
+
+        elasticClient.search({
+          index: config.services_index_name,
+          body: requestBody.toJSON()
+        }).then( resp => {
+
+          const source = bucket._source;
 
           source.service.forEach( (_service, index) => {
 
@@ -116,18 +124,15 @@ class Repository {
                                         _service.service_id,
                                         _service.name,
                                         _service.url,
-                                        category.objectId,
+                                        _service.categoryId,
                                         _service.soap_action,
                                         _service.sla,
                                         _service.verb);
-
-            category.esbServices.push(service);
             this.services.push(service);
-          })
-        })
+        });
 
-      });
-    //}
+      })
+
   }
 
   getServiceById(id: number): Service {
