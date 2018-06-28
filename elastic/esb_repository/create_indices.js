@@ -1,5 +1,5 @@
 {
-  "esb_ppr_repository":  {
+  "esb_ppr_repository": {
     "mappings": {
       "categories": {
         "properties": {
