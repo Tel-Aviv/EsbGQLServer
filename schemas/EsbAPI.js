@@ -97,6 +97,7 @@ class Repository {
 
       elasticClient.search({
         index: config.categories_index_name,
+        size: 100,
         body: requestBody.toJSON()
       }).then( response => {
 
@@ -113,6 +114,7 @@ class Repository {
 
         elasticClient.search({
           index: config.services_index_name,
+          size: 10000,
           body: requestBody.toJSON()
         }).then( resp => {
 
@@ -132,7 +134,7 @@ class Repository {
         });
 
       })
-      
+
     });
   }
 
