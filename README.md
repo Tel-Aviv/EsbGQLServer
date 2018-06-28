@@ -4,7 +4,7 @@
 ## How to build/debug
 
 ### If you intending to work against Elasticsearch ( Mock mode may be simpler :blush: )
-a). Prepare repository indices: esb_<ppr_>categories and esb_<ppr_>ervices ( supply -e <env> parameter according for the desired environment)
+a). Prepare repository indices: esb_<ppr_>categories and esb_<ppr_>services ( supply -e <env> parameter according for the desired environment)
   1. Run <code>yarn <b>create_repository_indices</b> -e ppr (-e prod)</code> to (re-)create elastic indices. This script will also delete existing mapping of the indices.
   2. Run <code>yarn <b>create_repository_mapping</b> -e ppr (-e prod)</code> to map this index
   3. Load SQL data to this index by executing <code>yarn <b>load_repository_data</b> -e ppr (-e prod)</code> 
