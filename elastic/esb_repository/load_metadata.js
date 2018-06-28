@@ -4,8 +4,6 @@ var myArgs = require('optimist').argv,
     help1 = 'No environment is specified. Add -e prod or -e ppr to CLI',
     help2 = ' is unknown environment. Use \'prod\' or \'ppr\'!'
 
-debugger
-
 if( !myArgs.e ) {
   console.log(help1);
   process.exit(0);
@@ -64,10 +62,11 @@ sql.connect(config, err => {
   let currentIndex = 0;
 
   let count = 0;
+  let services = {};
 
   request.on('row', row => {
-    let services = [];
 
+    services[row.category_id] = [];
     console.log('CategoryId: ' + row.category_id);
 
     const servicesRequest = new sql.Request();
@@ -91,7 +90,7 @@ sql.connect(config, err => {
               verb: ( serviceRow.pattern_id == 3 ) ? "GET" : "POST"
           }
 
-          services.push(service);
+          services[row.category_id].push(service);
       });
 
       servicesRequest.on('error', err => {
@@ -104,7 +103,7 @@ sql.connect(config, err => {
           let record = {
               id: row.category_id,
               name: row.category_name,
-              service: services
+              service: services[row.category_id]
           }
 
           bulk.push(
