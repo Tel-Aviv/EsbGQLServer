@@ -118,9 +118,10 @@ class Repository {
           body: requestBody.toJSON()
         }).then( resp => {
 
-          const source = bucket._source;
+          console.log('Services count: ' + resp.hits.total);
 
-          source.service.forEach( (_service, index) => {
+          resp.hits.hits.forEach( (bucket, index) => {
+            const _service = bucket._source;
 
             const service = new Service(casual.uuid,
                                         _service.service_id,
@@ -131,7 +132,7 @@ class Repository {
                                         _service.sla,
                                         _service.verb);
             this.services.push(service);
-        });
+          });
 
       })
 
