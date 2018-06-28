@@ -84,12 +84,13 @@ client.indices.putMapping({
               }
       }
     }
+  }
 },
 function(err,resp,status){
     if (err) {
       console.log(err);
     }
     else {
-      console.log(resp);
+      console.log(`Mapping for index ${esIndexName} was created`, resp);
     }
 });
