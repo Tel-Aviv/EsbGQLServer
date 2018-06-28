@@ -7,7 +7,7 @@
 a). Prepare repository indices: esb_<ppr_>categories and esb_<ppr_>services ( supply -e <env> parameter according for the desired environment)
   1. Run <code>yarn <b>create_repository_indices</b> -e ppr (-e prod)</code> to (re-)create elastic indices. This script will also delete existing mapping of the indices.
   2. Run <code>yarn <b>create_repository_mapping</b> -e ppr (-e prod)</code> to map this index
-  3. Load SQL data to this index by executing <code>yarn <b>load_repository_data</b> -e ppr (-e prod)</code> 
+  3. Upload SQL data to this index by executing <code>yarn <b>upload_repository_data</b> -e ppr (-e prod)</code> 
   4. Check you're done: <code>GET esb_repository(esb_ppr_repository)/_search { "query": { "match_all": {} }}</code>
   
 b). Prepare runtime indexes
