@@ -34,15 +34,15 @@ if( !EsbAPI.isMockMode() ) {
         const message = m.message.value.toString('utf-8');
         var trace = JSON.parse(message);
 
-        console.log(trace);
-
         // Map serviceId to metadata
         const esbService = esbRepository.getServiceById(trace.service_id);
         console.log(`Service with id ${trace.service_id} found: ${esbService}. Name: ${esbService.name}`);
+
+        const serviceName = ( esbService ) ? esbService.name : '<unknown>';
         let newTrace = new Trace(casual.uuid,
                                  trace.message_guid,
                                  trace.status,
-                                 esbService.name,
+                                 serviceName,
                                  trace.service_id);
 
         pubsub.publish(TRACE_ADDED_TOPIC, {
