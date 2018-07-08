@@ -82,61 +82,62 @@ class Repository {
     this.categories = [];
     this.services = [];
 
-    // if( isMockMode ) {
-    //
-    //   this.services = mockServices;
-    //   this.categories = mockCategories;
-    //
-    // } else {
+    if( isMockMode ) {
 
-      const elasticClient = props;
-      const requestBody = esb.requestBodySearch()
-      .query(
-          esb.matchAllQuery()
-      )
+      this.services = mockServices;
+      this.categories = mockCategories;
 
-      elasticClient.search({
-        index: config.categories_index_name,
-        size: 100,
-        body: requestBody.toJSON()
-      }).then( response => {
+    } else {
 
-        console.log('Categories count: ' + response.hits.total);
-
-        response.hits.hits.forEach( (bucket, index) => {
-          const source = bucket._source;
-          const category = new Category(casual.uuid,
-                                        source.id,
-                                        source.name);
-          this.categories.push( category );
-          console.log('Category: ' + category.objectId);
-        });
+        const elasticClient = props;
+        const requestBody = esb.requestBodySearch()
+        .query(
+            esb.matchAllQuery()
+        )
 
         elasticClient.search({
-          index: config.services_index_name,
-          size: 10000,
+          index: config.categories_index_name,
+          size: 100,
           body: requestBody.toJSON()
-        }).then( resp => {
+        }).then( response => {
 
-          console.log('Services count: ' + resp.hits.total);
+          console.log('Categories count: ' + response.hits.total);
 
-          resp.hits.hits.forEach( (bucket, index) => {
-            const _service = bucket._source;
-
-            const service = new Service(casual.uuid,
-                                        _service.service_id,
-                                        _service.name,
-                                        _service.url,
-                                        _service.categoryId,
-                                        _service.soap_action,
-                                        _service.sla,
-                                        _service.verb);
-            this.services.push(service);
+          response.hits.hits.forEach( (bucket, index) => {
+            const source = bucket._source;
+            const category = new Category(casual.uuid,
+                                          source.id,
+                                          source.name);
+            this.categories.push( category );
+            console.log('Category: ' + category.objectId);
           });
 
-      })
+          elasticClient.search({
+            index: config.services_index_name,
+            size: 10000,
+            body: requestBody.toJSON()
+          }).then( resp => {
 
-    });
+            console.log('Services count: ' + resp.hits.total);
+
+            resp.hits.hits.forEach( (bucket, index) => {
+              const _service = bucket._source;
+
+              const service = new Service(casual.uuid,
+                                          _service.service_id,
+                                          _service.name,
+                                          _service.url,
+                                          _service.categoryId,
+                                          _service.soap_action,
+                                          _service.sla,
+                                          _service.verb);
+              this.services.push(service);
+            });
+
+        })
+
+      });
+    }
   }
 
   getServiceById(id: number): Service {
