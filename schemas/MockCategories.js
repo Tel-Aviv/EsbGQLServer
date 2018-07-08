@@ -1,26 +1,36 @@
+import casual from 'casual';
+
 const mockCategories = [{
-  objectId: 1,
+  id: casual.uuid,
+  objectId: 915,
   name: "משרד התחבורה"
 }, {
-  objectId: 2,
+  id: casual.uuid,
+  objectId: 946,
   name: "שירותי מיקום"
 }, {
-  objectId: 3,
+  id: casual.uuid,
+  objectId: 947,
   name: "דיגיתל"
 }, {
-  objectId: 4,
+  id: casual.uuid,
+  objectId: 956,
   name: "מחו\"ג"
 }, {
-  objectId: 5,
-  CategoryName: "עירייה זמינה"
+  id: casual.uuid,
+  objectId: 957,
+  name: "עירייה זמינה"
 }, {
-  objectId: 6,
+  id: casual.uuid,
+  objectId: 958,
   name: "עמ\"ל"
 }, {
-  objectId: 10,
+  id: casual.uuid,
+  objectId: 959,
   name: "טלאול"
 }, {
-  objectId: 12,
+  id: casual.uuid,
+  objectId: 960,
   name: "תשתיות אינטגרציה"
 }];
 
