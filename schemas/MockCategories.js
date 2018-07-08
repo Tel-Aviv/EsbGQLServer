@@ -1,27 +1,27 @@
 const mockCategories = [{
-  CategoryId: 1,
-  CategoryName: "משרד התחבורה"
+  objectId: 1,
+  name: "משרד התחבורה"
 }, {
-  CategoryId: 2,
-  CategoryName: "שירותי מיקום"
+  objectId: 2,
+  name: "שירותי מיקום"
 }, {
-  CategoryId: 3,
-  CategoryName: "דיגיתל"
+  objectId: 3,
+  name: "דיגיתל"
 }, {
-  CategoryId: 4,
-  CategoryName: "מחו\"ג"
+  objectId: 4,
+  name: "מחו\"ג"
 }, {
-  CategoryId: 5,
+  objectId: 5,
   CategoryName: "עירייה זמינה"
 }, {
-  CategoryId: 6,
-  CategoryName: "עמ\"ל"
+  objectId: 6,
+  name: "עמ\"ל"
 }, {
-  CategoryId: 10,
-  CategoryName: "טלאול"
+  objectId: 10,
+  name: "טלאול"
 }, {
-  CategoryId: 12,
-  CategoryName: "תשתיות אינטגרציה"
+  objectId: 12,
+  name: "תשתיות אינטגרציה"
 }];
 
 module.exports = mockCategories;
