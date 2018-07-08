@@ -1,35 +1,29 @@
 import casual from 'casual';
 
 const mockServices = [{
-    id: 1,
-    CategoryId: 1,
-    name: 'מיקי',
-    Url: casual.url,
-    ExpectedSla: 200
+    id: casual.uuid,
+    objectId: 915,
+    categoryId: 34,
+    name: 'HR.GetEmployeeDataFromHR',
+    address: 'http://iispprlb/TlvBusinessLogic/Applications/Integration/EmployeeDataFromHR/EmployeeDataFromHR.asmx',
+    sla: 200,
+    verb: 'POST'
   }, {
-    id: 2,
-    CategoryId: 2,
-    name: 'שירות אולג',
-    Url: casual.url,
-    ExpectedSla: 150
+    id: casual.uuid,
+    objectId: 947,
+    categoryId: 28,
+    name: 'Digitel.Crm.ActivateCustomer',
+    address: 'http://dgtcrmbppr01/WS/DigitalMuniWCF/CRMDigitalMuniService.svc',
+    sla: 150,
+    verb: 'POST'
 }, {
-  id: 3,
-  CategoryId: 2,
-  name: 'מייק SAP',
-  Url: casual.url,
-  ExpectedSla: 140
-},{
-  id: 4,
-  CategoryId: 2,
-  name: 'Mock Service 1',
-  Url: casual.url,
-  ExpectedSla: 140
-}, {
-  id: 5,
-  CategoryId: 2,
-  name: 'Mock Service 2',
-  Url: casual.url,
-  ExpectedSla: 140
+  id: casual.uuid,
+  objectId: 957,
+  categoryId: 28,
+  name: 'Digitel.Crm.RemoveCustomerFromDistributionList',
+  address: 'http://dgtcrmbppr01/WS/DigitalMuniWCF/CRMDigitalMuniService.svc',
+  sla: 140,
+  verb: 'POST'
 }];
 
 module.exports = mockServices;
