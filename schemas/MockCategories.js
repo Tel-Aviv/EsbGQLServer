@@ -2,35 +2,35 @@ import casual from 'casual';
 
 const mockCategories = [{
   id: casual.uuid,
-  objectId: 915,
+  objectId: 34,
   name: "משרד התחבורה"
 }, {
   id: casual.uuid,
-  objectId: 946,
+  objectId: 28,
   name: "שירותי מיקום"
 }, {
   id: casual.uuid,
-  objectId: 947,
+  objectId: 29,
   name: "דיגיתל"
 }, {
   id: casual.uuid,
-  objectId: 956,
+  objectId: 30,
   name: "מחו\"ג"
 }, {
   id: casual.uuid,
-  objectId: 957,
+  objectId: 31,
   name: "עירייה זמינה"
 }, {
   id: casual.uuid,
-  objectId: 958,
+  objectId: 32,
   name: "עמ\"ל"
 }, {
   id: casual.uuid,
-  objectId: 959,
+  objectId: 33,
   name: "טלאול"
 }, {
   id: casual.uuid,
-  objectId: 960,
+  objectId: 35,
   name: "תשתיות אינטגרציה"
 }];
 
