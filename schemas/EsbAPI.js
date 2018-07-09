@@ -13,7 +13,7 @@ const MOCK_TIMEOUT = 1000;
 function isMockMode(): boolean {
 
   let mockToken = process.argv.find( (arg: string) => {
-    return arg == "--mock"
+    return arg === "--mock"
   });
 
   return mockToken;
@@ -82,7 +82,9 @@ class Repository {
     this.categories = [];
     this.services = [];
 
-    if( isMockMode ) {
+    if( isMockMode() ) {
+
+      console.log('Running in mock mode');
 
       this.services = mockServices;
       this.categories = mockCategories;
