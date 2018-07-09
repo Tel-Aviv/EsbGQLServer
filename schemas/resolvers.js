@@ -23,7 +23,8 @@ import elasticsearch from 'elasticsearch';
 if( !EsbAPI.isMockMode() ) {
 
     var consumer = new Kafka.SimpleConsumer({
-      connectionString: "10.1.70.101:9092",
+      connectionString: "10.1.70.101:9092, 10.1.70.117:9092",
+      //connectionString: "10.1.70.101:9092",
       asyncCompression: true
     })
 
@@ -153,12 +154,14 @@ class Repository {
 
     if( filter ) {
 
-      const filters = Object.keys(filter);
+      let filterNames = Object.keys(filter);
+      // Remove null filters
+      filterNames = filterNames.filter( e => filter[e] );
 
       _services = _services.filter( service => {
 
-        for(let i = 0; i < filters.length; i++) {
-          const _filter = filters[i];
+        for(let i = 0; i < filterNames.length; i++) {
+          const _filter = filterNames[i];
           if( filter[_filter] != service[_filter] ) {
             return false;
           }
