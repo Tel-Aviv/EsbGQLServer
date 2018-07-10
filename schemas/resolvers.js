@@ -464,8 +464,7 @@ class EsbRuntime {
 
     if( EsbAPI.isMockMode() ) {
 
-      for(let i = before == 0 ? 0 : 1;
-          i <= before; i++) {
+      for(let i = 0; i <= before; i++) {
         summaries.push(new Summary(moment().add(-i, 'days'),
                                    casual.integer(0, 10)));
       }
@@ -498,10 +497,25 @@ class EsbRuntime {
           body: requestBody.toJSON()
       }).then( response => {
 
-        response.aggregations.histogram.buckets.forEach( bucket => {
-          let date = moment(bucket.key_as_string).format('DD-MM-YYYY');;
-          summaries.push(new Summary(date, bucket.doc_count));
-        });
+        // Prepare dates array initialized with 0 to use in case where no errors
+        // were detected for specific date
+        for(let i = 0; i <= before; i++) {
+          summaries.push(new Summary(moment().add(-i, 'days'), 0));
+        }
+
+        summaries.map( _s => {
+          const found = response.aggregations.histogram.buckets.find( bucket => {
+            const m = moment(bucket.key_as_string);
+            return _s.date.isSame(m, 'day');
+          });
+
+          if( found ) {
+            _.assign( _s, {
+              value: found.doc_count
+            })
+          }
+
+        })
 
         return summaries;
     })
