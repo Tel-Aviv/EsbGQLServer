@@ -300,15 +300,12 @@ class EsbRuntime {
         histogramAgg
     );
 
-    console.time('Distribution query');
     return elasticClient.search({
       index: config.summary_index_name,
       type: 'correlate_msg',
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
     }).then( response => {
-
-      console.timeEnd('Distribution query');
 
       response.aggregations.distribution.buckets.forEach( (bucket,index) => {
 
