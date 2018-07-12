@@ -35,20 +35,26 @@ if( !EsbAPI.isMockMode() ) {
         const message = m.message.value.toString('utf-8');
         var trace = JSON.parse(message);
 
-        // Map serviceId to metadata
-        const esbService = esbRepository.getServiceById(trace.service_id);
-        console.log(`Service with id ${trace.service_id} found: ${esbService}. Name: ${esbService.name}`);
+        let _services = esbRepository.services({
+          "soapAction": trace.soap_action,
+          "address": trace.service_url,
+          "verb": trace.verb
+        });
+        
+        if( _services.length > 0) {
+          const esbService = _services[0];
 
-        const serviceName = ( esbService ) ? esbService.name : '<unknown>';
-        let newTrace = new Trace(casual.uuid,
-                                 trace.message_guid,
-                                 trace.status,
-                                 serviceName,
-                                 trace.service_id);
+          const serviceName = ( esbService ) ? esbService.name : '<unknown>';
+          let newTrace = new Trace(casual.uuid,
+                                   trace.message_guid,
+                                   trace.status,
+                                   serviceName,
+                                   trace.service_id);
 
-        pubsub.publish(TRACE_ADDED_TOPIC, {
-                                            traceAdded: newTrace
-                                         });
+          pubsub.publish(TRACE_ADDED_TOPIC, {
+                                              traceAdded: newTrace
+                                           });
+        }
 
       })
 
@@ -150,25 +156,7 @@ class Repository {
 
   services({filter, page, pageSize}) : SetInfo {
 
-    let _services = esbRepository.services;
-
-    if( filter ) {
-
-      let filterNames = Object.keys(filter);
-      // Remove null filters
-      filterNames = filterNames.filter( e => filter[e] );
-
-      _services = _services.filter( service => {
-
-        for(let i = 0; i < filterNames.length; i++) {
-          const _filter = filterNames[i];
-          if( filter[_filter] != service[_filter] ) {
-            return false;
-          }
-        }
-        return true;
-      });
-    }
+    let _services = esbRepository.services(filter);
 
     return new SetInfo(_services.length,
                        _services);
