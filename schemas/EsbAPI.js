@@ -75,18 +75,18 @@ class Category {
 class Repository {
 
   categories: Category[];
-  services: Service[];
+  esbServices: Service[];
 
   constructor(props) {
 
     this.categories = [];
-    this.services = [];
+    this.esbServices = [];
 
     if( isMockMode() ) {
 
       console.log('Running in mock mode');
 
-      this.services = mockServices;
+      this.esbServices = mockServices;
       this.categories = mockCategories;
 
     } else {
@@ -133,7 +133,7 @@ class Repository {
                                           _service.soap_action,
                                           _service.sla,
                                           _service.verb);
-              this.services.push(service);
+              this.esbServices.push(service);
             });
 
         })
@@ -148,6 +148,31 @@ class Repository {
       s.objectId === id
     ));
 
+  }
+
+  services(filter) {
+
+    let _services = this.esbServices;
+
+    if( filter ) {
+
+      let filterNames = Object.keys(filter);
+      // Remove null filters
+      filterNames = filterNames.filter( e => filter[e] );
+
+      _services = this.esbServices.filter( service => {
+
+        for(let i = 0; i < filterNames.length; i++) {
+          const _filter = filterNames[i];
+          if( filter[_filter] != service[_filter] ) {
+            return false;
+          }
+        }
+        return true;
+      });
+    }
+
+    return _services;
   }
 
   deleteService(serviceId: number) : Service {
