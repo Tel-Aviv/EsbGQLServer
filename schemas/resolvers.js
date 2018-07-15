@@ -6,6 +6,7 @@ import casual from 'casual';
 import moment from 'moment';
 import rp from 'request-promise';
 import { GraphQLError } from 'graphql/error';
+import fetch from 'node-fetch';
 
 import esb from 'elastic-builder';
 
@@ -30,7 +31,7 @@ if( !EsbAPI.isMockMode() ) {
 
     var dataHandler = function(messageSet, topic, partition){
 
-      messageSet.forEach(function (m){
+      messageSet.forEach(async function (m){
 
         const message = m.message.value.toString('utf-8');
         var trace = JSON.parse(message);
@@ -40,7 +41,7 @@ if( !EsbAPI.isMockMode() ) {
           "address": trace.service_url,
           "verb": trace.verb
         });
-        
+
         if( _services.length > 0) {
           const esbService = _services[0];
 
@@ -54,6 +55,28 @@ if( !EsbAPI.isMockMode() ) {
           pubsub.publish(TRACE_ADDED_TOPIC, {
                                               traceAdded: newTrace
                                            });
+
+          // Upldate ES with map results
+          const esRequest = `{
+            "query": {
+              "match": {
+                "message_guid": "${trace.message_guid}"
+              }
+            },
+            "script": {
+              "source": "ctx._source.service_name = '${serviceName}'"
+            }
+          }`;
+
+          try {
+            const resp = await fetch(`http://10.1.70.47:9200/${config.summary_index_name}/_update_by_query`, {
+              method: 'POST',
+              body: esRequest
+            });
+            const _resp = await resp.json();
+         } catch( err ) {
+           console.error(err);
+         }
         }
 
       })
