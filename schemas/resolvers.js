@@ -267,7 +267,7 @@ class EsbRuntime {
       let series = [];
       for(let i = 0; i < servicesIds.length; i++) {
          //let service = EsbAPI.getService(servicesIds[i]);
-         let service = esbRepository.services[i];
+         let service = esbRepository.esbServices[i];
          let data = [];
          for(let j = daysBefore == 0 ? 0 : 1;
              j <= daysBefore; j++ ) {
@@ -686,7 +686,7 @@ export const resolvers = {
           if( EsbAPI.isMockMode() && mockTraceTimerId == null ) {
             mockTraceTimerId = setInterval( () => {
 
-              let service = casual.random_element(esbRepository.services);
+              let service = casual.random_element(esbRepository.esbServices);
               var statuses = ['INFO', 'WARNING', 'ERROR'];
               let status = casual.random_element(statuses);
 
