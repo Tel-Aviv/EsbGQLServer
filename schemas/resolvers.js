@@ -21,6 +21,8 @@ if( ! EsbAPI.isMockMode() )
 
 import elasticsearch from 'elasticsearch';
 
+const ES_UPDATE_TIMEOUT = 3000;
+
 if( !EsbAPI.isMockMode() ) {
 
     var consumer = new Kafka.SimpleConsumer({
@@ -36,6 +38,7 @@ if( !EsbAPI.isMockMode() ) {
         const message = m.message.value.toString('utf-8');
         var trace = JSON.parse(message);
 
+        // Perform map from soap_action, address and verb to ESB Metadata values
         let _services = esbRepository.services({
           "soapAction": trace.soap_action,
           "address": trace.service_url,
@@ -46,37 +49,51 @@ if( !EsbAPI.isMockMode() ) {
           const esbService = _services[0];
 
           const serviceName = ( esbService ) ? esbService.name : '<unknown>';
+          const serviceId = esbService.objectId;
           let newTrace = new Trace(casual.uuid,
                                    trace.message_guid,
                                    trace.status,
                                    serviceName,
-                                   trace.service_id);
+                                   serviceId);
 
           pubsub.publish(TRACE_ADDED_TOPIC, {
                                               traceAdded: newTrace
                                            });
 
-          // Upldate ES with map results
-          const esRequest = `{
-            "query": {
-              "match": {
-                "message_guid": "${trace.message_guid}"
-              }
-            },
-            "script": {
-              "source": "ctx._source.service_name = '${serviceName}'"
-            }
-          }`;
+          setTimeout( async() => {
 
-          try {
-            const resp = await fetch(`http://10.1.70.47:9200/${config.summary_index_name}/_update_by_query`, {
-              method: 'POST',
-              body: esRequest
-            });
-            const _resp = await resp.json();
-         } catch( err ) {
-           console.error(err);
-         }
+            try {
+
+              // Update ES with map results
+              const esRequest = `{
+                "query": {
+                  "match": {
+                    "message_guid": "${trace.message_guid}"
+                  }
+                },
+                "script": {
+                  "source": "ctx._source.service_name = '${serviceName}'; ctx._source.service_id = ${serviceId}"
+                }
+              }`;
+              console.log(esRequest);
+
+              const response = await fetch(`http://10.1.70.47:9200/${config.summary_index_name}/_update_by_query`, {
+                method: 'POST',
+                body: esRequest
+              });
+              console.log(`Elastic POST executed: ${JSON.stringify(response)}`);
+              if( !response.ok )
+                throw Error(response.statusText);
+
+              const _resp = await response.json();
+              console.log(`Elastic POST result obtained: ${JSON.stringify(_resp)}`);
+           } catch( err ) {
+             console.error(err);
+           }
+
+         }, ES_UPDATE_TIMEOUT);
+
+
         }
 
       })
@@ -267,7 +284,7 @@ class EsbRuntime {
       let series = [];
       for(let i = 0; i < servicesIds.length; i++) {
          //let service = EsbAPI.getService(servicesIds[i]);
-         let service = esbRepository.esbServices[i];
+         let service = esbRepository.services[i];
          let data = [];
          for(let j = daysBefore == 0 ? 0 : 1;
              j <= daysBefore; j++ ) {
@@ -313,7 +330,7 @@ class EsbRuntime {
 
     return elasticClient.search({
       index: config.summary_index_name,
-      type: 'correlate_msg',
+      type: 'summary',
       "size": 0, // omit hits from putput
       body: requestBody.toJSON()
     }).then( response => {
@@ -686,7 +703,7 @@ export const resolvers = {
           if( EsbAPI.isMockMode() && mockTraceTimerId == null ) {
             mockTraceTimerId = setInterval( () => {
 
-              let service = casual.random_element(esbRepository.esbServices);
+              let service = casual.random_element(esbRepository.services);
               var statuses = ['INFO', 'WARNING', 'ERROR'];
               let status = casual.random_element(statuses);
 
