@@ -1,5 +1,6 @@
 // @flow
 import _ from 'lodash';
+import { URL } from 'url';
 import elasticsearch from 'elasticsearch';
 import esb from 'elastic-builder';
 import casual from 'casual';
@@ -111,7 +112,7 @@ class Repository {
                                           source.id,
                                           source.name);
             this.categories.push( category );
-            console.log('Category: ' + category.objectId);
+            //console.log('Category: ' + category.objectId);
           });
 
           elasticClient.search({
@@ -164,7 +165,14 @@ class Repository {
 
         for(let i = 0; i < filterNames.length; i++) {
           const _filter = filterNames[i];
-          if( filter[_filter] != service[_filter] ) {
+          // Compare 'address' as URLs,
+          // i.e. compare only pathnames, without hosts part of URL
+          if( _filter === 'address' ) {
+            const _url = new URL(service[_filter]);
+            const _filterUrl = new URL(filter[_filter]);
+            if( _url.pathname !=  _filterUrl.pathname )
+              return false;
+          } else if( filter[_filter] != service[_filter] ) {
             return false;
           }
         }
