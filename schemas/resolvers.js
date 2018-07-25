@@ -21,7 +21,7 @@ if( ! EsbAPI.isMockMode() )
 
 import elasticsearch from 'elasticsearch';
 
-const ES_UPDATE_TIMEOUT = 3000;
+const ES_UPDATE_TIMEOUT = config.update_timeout;
 
 if( !EsbAPI.isMockMode() ) {
 
@@ -75,18 +75,23 @@ if( !EsbAPI.isMockMode() ) {
                   "source": "ctx._source.service_name = '${serviceName}'; ctx._source.service_id = ${serviceId}"
                 }
               }`;
-              console.log(esRequest);
+              //console.log(esRequest);
 
-              const response = await fetch(`http://10.1.70.47:9200/${config.summary_index_name}/_update_by_query`, {
+              const response = await fetch(`http://10.1.70.47:9200/${config.summary_index_name}/_update_by_query?conflicts=proceed`, {
                 method: 'POST',
                 body: esRequest
               });
-              console.log(`Elastic POST executed: ${JSON.stringify(response)}`);
-              if( !response.ok )
+              //console.log(`Elastic POST executed: ${JSON.stringify(response)}`);
+              if( !response.ok ) {
                 throw Error(response.statusText);
+              }
 
               const _resp = await response.json();
-              console.log(`Elastic POST result obtained: ${JSON.stringify(_resp)}`);
+              if( _resp.updated === 0 ) {
+                console.error(`No updates for msg_guid ${trace.message_guid}`);
+              }
+
+              //console.log(`Elastic POST result obtained: ${JSON.stringify(_resp)}`);
            } catch( err ) {
              console.error(err);
            }
