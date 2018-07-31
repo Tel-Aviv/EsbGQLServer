@@ -3,5 +3,5 @@
   "services_index_name": "esb_ppr_services",
   "summary_index_name": "esb_ppr_summary",
   "kafka_topic_name": "traces_ppr_summary",
-  "update_timeout": 6000,
+  "update_timeout": "6000"
 }
